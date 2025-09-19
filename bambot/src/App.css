@@ -1,0 +1,74 @@
+/* App.css */
+
+/* アプリ全体のコンテナ。画面全体を占有し、子要素を縦に並べる。 */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; /* 画面の高さ全体を占める */
+}
+
+/* ヘッダーのスタイル */
+.app-header {
+  background-color: white; 
+  padding: 10px 20px;
+  text-align: center; /* 画像を中央に配置 */
+}
+
+/* ヘッダーの画像（ロゴ）のスタイル */
+.header-logo {
+  height: 40px; /* 画像の高さを設定 */
+  width: auto; /* 縦横比を維持 */
+}
+
+/* メインコンテンツのスタイル。残りのスペースをすべて埋める。 */
+.main-content {
+  flex-grow: 1; /* 残りのスペースを埋める */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  margin: 0;
+  padding: 0;
+}
+
+/* フッターのスタイル */
+.app-footer {
+  background-color: white; /* 背景色を白色に設定 */
+  color: black; /* 文字色を黒色に設定 */
+  padding: 3px;
+  text-align: center;
+  font-size: 10px;
+}
+
+/* 既存のスタイル */
+.image-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.responsive-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block; /* 画像の下の隙間をなくすために追加 */
+}
+
+.center-button {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  z-index: 10;
+}
+
+/* ブラウザのデフォルトの余白をリセット */
+body, html {
+  margin: 0;
+  padding: 0;
+}
