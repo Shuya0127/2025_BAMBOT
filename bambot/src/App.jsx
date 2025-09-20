@@ -1,7 +1,5 @@
-// App.jsx
-
 import './App.css';
-import take from './img/background2.jpg';
+import take from './img/background.jpg';
 import headerLogo from './img/logo.png'; 
 import { useNavigate } from 'react-router-dom';
 
@@ -26,15 +24,13 @@ function App() {
         <div className="image-container">
           <img src={take} alt="背景画像" className="responsive-image" />
           <button className="center-button" onClick={handleButtonClick}>
-            ボタン
+            スタート
           </button>
         </div>
       </main>
       
       {/* フッター部分 */}
-      <footer className="app-footer">
-        <p>© 2025 アプリ名. All rights reserved.</p>
-      </footer>
+      
       
     </div>
   );
