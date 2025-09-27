@@ -6,3 +6,6 @@
 
 案をよくする
 ・何かソフトウェアで魅力が欲しい
+
+リーフレットインストールコマンド
+npm install leaflet react-leaflet

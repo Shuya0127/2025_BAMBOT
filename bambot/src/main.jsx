@@ -4,6 +4,10 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import App from './App.jsx';
 import AppMain from './AppMain.jsx';
 
+// 【修正箇所】LeafletのCSSをここでインポートします。
+// これにより、アプリケーション全体でスタイルが適用されます。
+import 'leaflet/dist/leaflet.css'; 
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     {/* アプリケーション全体をBrowserRouterでラップします */}
