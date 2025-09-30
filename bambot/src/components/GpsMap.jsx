@@ -16,49 +16,28 @@ const INITIAL_POSITION = [35.6895, 139.6917];
 
 // ... (MapRefresher, MapViewUpdater コンポーネントは省略、変更なし) ...
 const MapRefresher = () => { /* ... */ return null; };
-const MapViewUpdater = ({ center }) => { /* ... */ return null; };
-// ... (コンポーネント省略終わり) ...
+const MapViewUpdater = ({ center }) => { 
+  const map = useMap();
+  useEffect(() => {
+    map.setView(center, map.getZoom());
+  }, [center, map]);
+  return null; 
+};
 
 
-const GpsMap = () => {
+const GpsMap = ({ wsRef }) => {
   const [position, setPosition] = useState(INITIAL_POSITION);
-  const [status, setStatus] = useState("サーバー接続待機中...");
-  const wsRef = useRef(null); 
-  const [ledStatus, setLedStatus] = useState("OFF"); 
-
-  // 【新規】WebSocket経由でNode.jsサーバーへLED制御コマンドを送信する関数
-  const sendLedCommand = (command) => {
-    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
-      console.error("WebSocketが接続されていません。");
-      setStatus("サーバー切断 (コマンド送信失敗)");
-      return;
-    }
-
-    // 🚨 変更点: コマンド文字列を "cut_on" / "cut_off" に設定
-    const message = {
-      command: command // 例: 'cut_on' or 'cut_off'
-    };
-
-    try {
-      wsRef.current.send(JSON.stringify(message));
-      // 状態表示は、'cut_on'の場合は'ON'、'cut_off'の場合は'OFF'と表示
-      setLedStatus(command.replace('cut_', '').toUpperCase()); 
-      console.log(`コマンド送信: ${command}`);
-    } catch (e) {
-      console.error(`コマンド送信エラー (${command}):`, e);
-      alert(`コマンド送信エラー: ${command}`);
-    }
-  };
-
+  const [status, setStatus] = useState("サーバー接続待機中..."); 
 
   useEffect(() => {
-    const ws = new WebSocket('ws://localhost:8080'); 
-    wsRef.current = ws;
+    const ws = wsRef.current; 
 
-    ws.onopen = () => {
-      console.log('WebSocket接続成功');
-      setStatus('サーバー接続済み');
-    };
+    if (!ws) {
+        setStatus("WebSocket参照なし (AppMainエラー)");
+        return;
+    }
+    
+    const originalOnMessage = ws.onmessage; 
 
     ws.onmessage = (event) => {
       try {
@@ -68,84 +47,52 @@ const GpsMap = () => {
           if (data.status === 'ok') {
             const newPos = [data.lat, data.lng];
             setPosition(newPos); 
-            setStatus(`GPS FIX (${data.sats}衛星) - 有効`);
-          } else if (data.status === 'error') {
-            setStatus(`❌ GPSエラー: ${data.message} (衛星: ${data.sats})`);
           }
         }
         
       } catch (e) {
         console.error("データ解析エラー、不正なJSONを受信:", event.data, e);
-        setStatus("データ解析エラー");
+      }
+      
+      if (originalOnMessage) {
+          originalOnMessage(event);
       }
     };
+    
+  }, [wsRef]);
 
-    ws.onclose = () => {
-      console.log('WebSocket接続切断');
-      setStatus('サーバー切断');
-    };
-
-    return () => {
-      ws.close();
-    };
-  }, []); 
+  // 🚩 変更点1: MAP_SIZEを400pxから200pxに変更
+  const MAP_SIZE = '250px'; 
 
   return (
-    <div style={{ width: '100%' }}>
+    <div style={{ 
+        width: MAP_SIZE, 
+        margin: '0 auto', 
+        float: 'right', 
+    }}>
       
-      {/* 1. 状態表示と制御ボタンのコンテナ */}
-      <div style={{ 
-          width: '90%', 
-          margin: '20px auto 10px auto', 
-          maxWidth: '1200px', 
-          padding: '10px', 
-          backgroundColor: '#f5f5f5',
-          borderRadius: '5px',
-          textAlign: 'center'
-      }}>
-        <h3>トラッカー状態: {status}</h3>
-        
-        {/* LED制御ボタン */}
-        <div style={{ marginTop: '10px' }}>
-            <button 
-                // 🚨 変更点: 送信コマンドを 'cut_on' に変更
-                onClick={() => sendLedCommand('cut_on')} 
-                style={{ 
-                    padding: '10px 20px', 
-                    marginRight: '10px', 
-                    backgroundColor: ledStatus === 'ON' ? 'darkgreen' : 'green', 
-                    color: 'white', 
-                    border: 'none', 
-                    borderRadius: '5px',
-                    cursor: 'pointer'
-                }}
-            >
-                ON (cut_on) 🟢 (現在: {ledStatus})
-            </button>
-            <button 
-                // 🚨 変更点: 送信コマンドを 'cut_off' に変更
-                onClick={() => sendLedCommand('cut_off')} 
-                style={{ 
-                    padding: '10px 20px', 
-                    backgroundColor: ledStatus === 'OFF' ? 'darkred' : 'red', 
-                    color: 'white', 
-                    border: 'none', 
-                    borderRadius: '5px',
-                    cursor: 'pointer'
-                }}
-            >
-                OFF (cut_off) 🔴 (現在: {ledStatus})
-            </button>
-        </div>
-      </div>
-
-      {/* 2. マップコンテナ */}
-      <div className="map-display-area" style={{ height: '80vh', width: '90%', margin: '0px auto', maxWidth: '1200px' }}>
+      {/* 2. マップコンテナ - 固定サイズで正方形を確定 */}
+      <div 
+        className="map-display-area" 
+        style={{ 
+          width: '100%', 
+          // 🚩 変更点2: heightもMAP_SIZE (200px) を参照
+          height: MAP_SIZE, 
+          position: 'relative', 
+          margin: '0px auto'
+        }}
+      > 
           <MapContainer 
             center={INITIAL_POSITION} 
             zoom={10} 
             scrollWheelZoom={true}
-            style={{ height: '100%', width: '100%' }}
+            style={{ 
+              height: '100%', 
+              width: '100%',
+              position: 'absolute', 
+              top: 0, 
+              left: 0 
+            }}
           >
             <TileLayer
               attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
