@@ -14,7 +14,6 @@ function AppMain() {
   const navigate = useNavigate();
 
   const handleGoToHome = () => {
-    // navigate('/')でルートパスに直接遷移
     navigate('/');
   };
 
@@ -30,14 +29,13 @@ function AppMain() {
 
         <h1>リアルタイム GPS トラッカー</h1>
         
-        {/* 3. マップ表示エリア（ヘッダーとボタンの間） */}
-        <div className="map-display-area" style={{ width: '90%', margin: '20px auto', maxWidth: '1200px' }}>
-          {/* GpsMapコンポーネントがWebSocket通信と地図表示を処理 */}
-          <GpsMap />
-        </div>
+        {/* 3. マップとボタンの表示エリア（GpsMapコンポーネントが全てを内包） */}
+        {/* ⚠️ GpsMap.jsxでレイアウトを調整したため、ここではシンプルにコンポーネントを配置 */}
+        <GpsMap />
         
         {/* 5. ナビゲーションボタン */}
-        <button className="back-to-home-button" onClick={handleGoToHome} style={{ marginBottom: '40px' }}>
+        {/* ナビゲーションボタンの位置がマップ/制御エリアの下になるように配置 */}
+        <button className="back-to-home-button" onClick={handleGoToHome} style={{ margin: '40px auto', display: 'block' }}>
           ホームに戻る
         </button>
       </main>

@@ -1,0 +1,6 @@
+起動コマンド（cd 2025_BAMBOT_server）
+node server.js
+
+インストールコマンド（cd 2025_BAMBOT_server）
+npm install serialport ws http
+npm install -g nodemon
