@@ -24,7 +24,7 @@
   /* ⭐ 修正点: ロゴ画像を垂直・水平方向ともに中央に配置するための Flexbox を適用 */
   display: flex;
   justify-content: center; /* 水平方向の中央揃え */
-  align-items: center;    /* 垂直方向の中央揃え (パディング内で) */
+  align-items: center;     /* 垂直方向の中央揃え (パディング内で) */
   /* ------------------------------ */
 }
 
@@ -81,11 +81,10 @@
 
 /* 個別スタイル (style属性) を持つボタンのホバーエフェクト */
 .sidebar-button[style]:hover {
-    filter: brightness(1.2); 
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); 
-    transform: translateY(-2px);
+  filter: brightness(1.2); 
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); 
+  transform: translateY(-2px);
 }
-
 
 /* 6. メインコンテンツエリア */
 .app-main-content {
@@ -99,14 +98,14 @@
 
 /* ⭐ 新規追加: マップと状態表示を重ねるためのコンテナ */
 .overlay-container {
-    position: absolute; 
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    padding: 30px; 
-    box-sizing: border-box;
-    z-index: 1; 
+  position: absolute; 
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  padding: 30px; 
+  box-sizing: border-box;
+  z-index: 1; 
 }
 
 /* ⭐ 新規追加: 背景カメラ映像のスタイル */
@@ -122,14 +121,14 @@
 
 /* ⭐ 状態表示のスタイル調整 */
 .status-display {
-    position: absolute;
-    left: 30px; 
-    bottom: 30px; 
-    background-color: rgba(255, 255, 255, 0.8); 
-    padding: 10px 15px;
-    border-radius: 5px;
-    color: #333;
-    z-index: 2; 
+  position: absolute;
+  left: 30px; 
+  bottom: 30px; 
+  background-color: rgba(255, 255, 255, 0.8); 
+  padding: 10px 15px;
+  border-radius: 5px;
+  color: #333;
+  z-index: 2; 
 }
 
 /* 7. 既存のボタンのスタイル: サイズ拡大 */
@@ -151,6 +150,22 @@
 
 /* H1タグも大きくする */
 .app-main-content h1 {
-    font-size: 42px;
-    margin-bottom: 30px;
+  font-size: 42px;
+  margin-bottom: 30px;
+}
+
+/* ⭐ 新規追加: disabled 状態のボタンのスタイル */
+.sidebar-button:disabled {
+  /* 背景色を暗くし、半透明にする */
+  background-color: #6c757d !important; /* 既存のstyle属性の色を上書きするために !important を使用 */
+  color: #f8f9fa !important;
+  cursor: not-allowed;
+  opacity: 0.65;
+  transform: none; /* ホバー時の動きを無効化 */
+  box-shadow: none;
+}
+
+.sidebar-button:disabled:hover {
+  filter: none; /* ホバー時の明るさ変更を無効化 */
+  box-shadow: none;
 }
