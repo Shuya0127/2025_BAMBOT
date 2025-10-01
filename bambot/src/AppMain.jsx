@@ -5,46 +5,9 @@ import './App.css';
 import headerLogo from './img/logo.png';
 import GpsMap from './components/GpsMap';
 
+
 // 新規追加: カメラ映像を表示するコンポーネント
-const WebcamStream = () => {
-    const videoRef = useRef(null);
-
-    useEffect(() => {
-        // カメラアクセス許可を求め、映像ストリームを取得
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-            navigator.mediaDevices.getUserMedia({ video: true })
-                .then(stream => {
-                    // 映像ストリームを<video>要素に設定
-                    if (videoRef.current) {
-                        videoRef.current.srcObject = stream;
-                    }
-                })
-                .catch(err => {
-                    console.error("カメラへのアクセスに失敗しました: ", err);
-                    alert("カメラへのアクセスが拒否されました。");
-                });
-
-            // コンポーネントがアンマウントされたときにストリームを停止
-            return () => {
-                if (videoRef.current && videoRef.current.srcObject) {
-                    const stream = videoRef.current.srcObject;
-                    stream.getTracks().forEach(track => track.stop());
-                }
-            };
-        }
-    }, []);
-
-    // 'background-video'クラスはAppMain.cssで定義
-    return (
-        <video 
-            ref={videoRef} 
-            className="background-video" 
-            autoPlay 
-            playsInline 
-            muted // バックグラウンド映像のためミュートを推奨
-        />
-    );
-};
+import WebcamStream from "./components/WebcamStream";
 
 // 【変更なし】WebSocket接続とLED制御コマンド送信のロジック
 const useLedControl = () => {
