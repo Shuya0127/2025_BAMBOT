@@ -21,16 +21,15 @@
   background-color: #FFFFFF;
   box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
   
-  /* ⭐ 修正点: ロゴ画像を垂直・水平方向ともに中央に配置するための Flexbox を適用 */
   display: flex;
-  justify-content: center; /* 水平方向の中央揃え */
-  align-items: center;     /* 垂直方向の中央揃え (パディング内で) */
-  /* ------------------------------ */
+  /* ⭐ 修正: 水平方向の配置を中央揃え(center)に戻す */
+  justify-content: center;
+  align-items: center; /* 垂直方向の中央揃えは維持 */
 }
 
 /* 3. コンテンツとサイドバーのラッパー */
 .content-and-sidebar-wrapper {
-  display: flex;
+  display:flex;
   width: 100%;
   flex-grow: 1;
   overflow: hidden;
@@ -40,7 +39,7 @@
 .sidebar-buttons {
   display: flex;
   flex-direction: column;
-  width: 120px;
+  width: 130px;
   flex-shrink: 0;
   background-color: #e9ecef;
   box-shadow: 3px 0 7.5px rgba(0, 0, 0, 0.15);
@@ -59,12 +58,12 @@
   color: #495057; /* デフォルトの文字色 */
   cursor: pointer;
   
-  transition: all 0.2s ease-in-out; 
+  transition: all 0.2s ease-in-out;
   
   font-size: 21px;
   box-sizing: border-box;
   
-  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.1); 
+  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.1);
 }
 
 .sidebar-button:last-child {
@@ -75,14 +74,14 @@
 .sidebar-button:hover {
   background-color: #ced4da;
   color: #212529;
-  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.1), 0 3px 8px rgba(0, 0, 0, 0.2); 
-  transform: translateY(-1px); 
+  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.1), 0 3px 8px rgba(0, 0, 0, 0.2);
+  transform: translateY(-1px);
 }
 
 /* 個別スタイル (style属性) を持つボタンのホバーエフェクト */
 .sidebar-button[style]:hover {
-  filter: brightness(1.2); 
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); 
+  filter: brightness(1.2);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
   transform: translateY(-2px);
 }
 
@@ -90,22 +89,22 @@
 .app-main-content {
   flex-grow: 1;
   overflow-y: auto;
-  padding: 0; 
+  padding: 0;
   text-align: center;
-  position: relative; 
-  background-color: transparent; 
+  position: relative;
+  background-color: transparent;
 }
 
 /* ⭐ 新規追加: マップと状態表示を重ねるためのコンテナ */
 .overlay-container {
-  position: absolute; 
+  position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  padding: 30px; 
+  padding: 30px;
   box-sizing: border-box;
-  z-index: 1; 
+  z-index: 1;
 }
 
 /* ⭐ 新規追加: 背景カメラ映像のスタイル */
@@ -115,20 +114,20 @@
   left: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover; 
-  z-index: 0; 
+  object-fit: cover;
+  z-index: 0;
 }
 
 /* ⭐ 状態表示のスタイル調整 */
 .status-display {
   position: absolute;
-  left: 30px; 
-  bottom: 30px; 
-  background-color: rgba(255, 255, 255, 0.8); 
+  left: 30px;
+  bottom: 30px;
+  background-color: rgba(255, 255, 255, 0.8);
   padding: 10px 15px;
   border-radius: 5px;
   color: #333;
-  z-index: 2; 
+  z-index: 2;
 }
 
 /* 7. 既存のボタンのスタイル: サイズ拡大 */
@@ -168,4 +167,10 @@
 .sidebar-button:disabled:hover {
   filter: none; /* ホバー時の明るさ変更を無効化 */
   box-shadow: none;
+}
+
+/* ⭐ 新規追加: ヘッダーロゴのスタイル (左寄せの調整) */
+.header-logo {
+  height: 40px;
+  margin-left: -53px; 
 }
