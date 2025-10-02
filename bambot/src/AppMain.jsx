@@ -269,11 +269,7 @@ function AppMain() {
           <div className="overlay-container">
             <GpsMap position={gpsPosition} />
             {/* このdivを消せばテキストを消せる（本番は削除予定） */}
-            <div className="status-display">
-              <h3>
-                トラッカー状態: {status} | 制御状態: {ledStatus}
-              </h3>
-            </div>
+            
 
           </div>
         </main>
