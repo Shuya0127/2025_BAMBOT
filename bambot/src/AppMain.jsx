@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'; 
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './AppMain.css';
 import './App.css';
@@ -10,290 +10,276 @@ const INITIAL_POSITION = [35.6895, 139.6917];
 
 // くにびきメッセ周辺の5つのランダム座標リスト
 const KUNIBIKI_MESSE_AREA_POSITIONS = [
-    [35.469333, 133.067056], // 1. くにびきメッセ (指定座標)
-    [35.469340, 133.067050],
-    [35.469328, 133.067040],
-    [35.469336, 133.067060],
-    [35.469341, 133.067054],
+  [35.469333, 133.067056],
+  [35.469440, 133.067150],
+  [35.469228, 133.067140],
+  [35.469436, 133.066960],
+  [35.469241, 133.066954],
 ];
 
-
-// カメラ映像を表示するコンポーネント (変更なし)
+// カメラ映像を表示するコンポーネント
 const WebcamStream = () => {
-    const videoRef = useRef(null);
+  const videoRef = useRef(null);
 
-    useEffect(() => {
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-            navigator.mediaDevices.getUserMedia({ video: true })
-                .then(stream => {
-                    if (videoRef.current) {
-                        videoRef.current.srcObject = stream;
-                    }
-                })
-                .catch(err => {
-                    console.error("カメラへのアクセスに失敗しました: ", err);
-                    alert("カメラへのアクセスが拒否されました。");
-                });
+  useEffect(() => {
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      navigator.mediaDevices
+        .getUserMedia({ video: true })
+        .then((stream) => {
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+          }
+        })
+        .catch((err) => {
+          console.error('カメラへのアクセスに失敗しました: ', err);
+          alert('カメラへのアクセスが拒否されました。');
+        });
 
-            return () => {
-                if (videoRef.current && videoRef.current.srcObject) {
-                    const stream = videoRef.current.srcObject;
-                    stream.getTracks().forEach(track => track.stop());
-                }
-            };
-        }
-    }, []);
+      return () => {
+        if (videoRef.current && videoRef.current.srcObject) {
+          const stream = videoRef.current.srcObject;
+          stream.getTracks().forEach((track) => track.stop());
+        }
+      };
+    }
+  }, []);
 
-    return (
-        <video 
-            ref={videoRef} 
-            className="background-video" 
-            autoPlay 
-            playsInline 
-            muted
-        />
-    );
+  return (
+    <video
+      ref={videoRef}
+      className="background-video"
+      autoPlay
+      playsInline
+      muted
+    />
+  );
 };
 
-// WebSocket接続とLED/GPS制御のロジック (変更なし)
+// WebSocket接続とLED/GPS制御のロジック
 const useLedControl = () => {
-  const [ledStatus, setLedStatus] = useState("OFF"); 
-  const wsRef = useRef(null); 
-  const [status, setStatus] = useState("サーバー接続待機中...");
-  // GPSの位置情報を親で管理
-  const [gpsPosition, setGpsPosition] = useState(INITIAL_POSITION); 
+  const [ledStatus, setLedStatus] = useState('OFF');
+  const wsRef = useRef(null);
+  const [status, setStatus] = useState('サーバー接続待機中...');
+  const [gpsPosition, setGpsPosition] = useState(INITIAL_POSITION);
 
-  useEffect(() => {
-    const ws = new WebSocket('ws://localhost:8080'); 
-    wsRef.current = ws;
+  useEffect(() => {
+    const ws = new WebSocket('ws://localhost:8080');
+    wsRef.current = ws;
 
-    ws.onopen = () => {
-      console.log('WebSocket接続成功');
-      setStatus('サーバー接続済み');
-    };
+    ws.onopen = () => {
+      console.log('WebSocket接続成功');
+      setStatus('サーバー接続済み');
+    };
 
-    // onmessageでGPSデータを受信し、状態を更新する
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        
-        if (data.type === 'gps_data') {
-          if (data.status === 'ok') {
-            setStatus(`GPS FIX (${data.sats}衛星) - 有効`);
-          } else if (data.status === 'error') {
-            setStatus(`❌ GPSエラー: ${data.message} (衛星: ${data.sats})`);
-          }
-        }
-        
-        // GPSデータを親の状態に保存
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+
+        if (data.type === 'gps_data') {
+          if (data.status === 'ok') {
+            setStatus(`GPS FIX (${data.sats}衛星) - 有効`);
+          } else if (data.status === 'error') {
+            setStatus(`❌ GPSエラー: ${data.message} (衛星: ${data.sats})`);
+          }
+        }
+
         const lat = parseFloat(data.lat);
         const lng = parseFloat(data.lng);
         if (data.type === 'gps_data' && data.status === 'ok' && !isNaN(lat) && !isNaN(lng)) {
-            setGpsPosition([lat, lng]); 
-            console.log('AppMain: WebSocket GPS Update:', [lat, lng]); 
+          setGpsPosition([lat, lng]);
+          console.log('AppMain: WebSocket GPS Update:', [lat, lng]);
         }
-        
-      } catch (e) {
-        console.error("データ解析エラー、不正なJSONを受信:", event.data, e);
-        setStatus("データ解析エラー");
-      }
-    };
-
-    ws.onclose = () => {
-      console.log('WebSocket接続切断');
-      setStatus('サーバー切断');
-    };
-
-    return () => {
-      ws.close();
-    };
-  }, []); 
-
-  // toggleLed 関数 (変更なし)
-  const toggleLed = () => {
-    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
-      console.error("WebSocketが接続されていません。");
-      setStatus("サーバー切断 (コマンド送信失敗)");
-      return;
-    }
-
-    const newStatus = ledStatus === 'ON' ? 'OFF' : 'ON';
-    const command = newStatus === 'ON' ? 'cut_on' : 'cut_off';
-    const message = { command };
-
-    try {
-      wsRef.current.send(JSON.stringify(message));
-      setLedStatus(newStatus); 
-      console.log(`コマンド送信: ${command} (${newStatus}へ)`);
-    } catch (e) {
-      console.error(`コマンド送信エラー (${command}):`, e);
-      alert(`コマンド送信エラー: ${command}`);
-    }
-  };
-
-  // 戻り値に setGpsPosition を含める
-  return { ledStatus, status, toggleLed, wsRef, gpsPosition, setGpsPosition };
-};
-
-
-function AppMain() {
-  const navigate = useNavigate();
-  const { ledStatus, status, toggleLed, wsRef, gpsPosition, setGpsPosition } = useLedControl();
-  const [isTesting, setIsTesting] = useState(false);
-  // ⭐ 修正箇所: setTimeoutのIDを保持するRefに変更
-  const timeoutRef = useRef(null);
-
-
-  // ホームに戻る際にOFFコマンドを送信するロジック (変更なし)
-  const handleGoToHome = () => {
-        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-            const offCommand = { command: 'cut_off' };
-            try {
-                wsRef.current.send(JSON.stringify(offCommand));
-                console.log('ホーム遷移前にOFFコマンドを送信しました: cut_off');
-            } catch (e) {
-                console.log('OFFコマンド送信エラー:', e);
-            }
-        }
-    navigate('/'); 
-  };
-  
-  // ⭐ 修正箇所: 4つ目のボタンのロジック (トグルON/OFFと再帰的な移動)
-  const handleLocationTestClick = () => {
-        
-        // --- テスト停止処理 (ボタンがONの状態からのOFF) ---
-        if (isTesting) {
-            if (timeoutRef.current) {
-                clearTimeout(timeoutRef.current);
-                timeoutRef.current = null;
-            }
-            // 座標を初期位置に戻す
-            setGpsPosition(INITIAL_POSITION); 
-            setIsTesting(false);
-            console.log("[テスト終了] ランダム移動を停止し、座標を初期位置に戻しました。");
-            return;
-        }
-
-        // --- テスト開始処理 (ボタンがOFFの状態からのON) ---
-        
-        // ランダムな座標を取得するヘルパー関数
-        const getRandomPosition = () => {
-            const randomIndex = Math.floor(Math.random() * KUNIBIKI_MESSE_AREA_POSITIONS.length);
-            return KUNIBIKI_MESSE_AREA_POSITIONS[randomIndex];
-        };
-
-        // 5秒と3秒で移動を繰り返す再帰関数
-        // isFiveSeconds: 次の移動までの待機時間が5秒かどうか (true=5秒, false=3秒)
-        const recursiveMove = (isFiveSeconds = true) => {
-            // 座標移動
-            const newPos = getRandomPosition();
-            setGpsPosition(newPos);
-            const delay = isFiveSeconds ? 5000 : 3000;
-            console.log(`[ランダム移動] ${isFiveSeconds ? '5秒' : '3秒'}待機後移動: ${newPos}`);
-            
-            // 次のタイマーを設定
-            timeoutRef.current = setTimeout(() => {
-                // 次は逆の間隔で再帰呼び出し
-                recursiveMove(!isFiveSeconds);
-            }, delay);
-        };
-        
-        // 1. テストモード開始
-        setIsTesting(true);
-        console.log(`[テスト開始] 座標ランダム移動を開始します (5秒/3秒繰り返し)`);
-
-        // 2. 最初の移動を即座に実行し、タイマー連鎖を開始
-        // recursiveMove(true)で開始すると、最初の移動が即座に行われ、次は5秒待機する
-        recursiveMove(true); 
+      } catch (e) {
+        console.error('データ解析エラー、不正なJSONを受信:', event.data, e);
+        setStatus('データ解析エラー');
+      }
     };
 
+    ws.onclose = () => {
+      console.log('WebSocket接続切断');
+      setStatus('サーバー切断');
+    };
 
-  // ボタンのハンドラ割り当て (変更なし)
-  const handleCutControlClick = toggleLed;
-  const handleButton2Click = () => { console.log('ボタン 2がクリックされました'); };
-  const handleButton3Click = handleGoToHome;
-  const handleButton4Click = handleLocationTestClick;
-  
-  // LED制御ボタンの表示テキストと色 (変更なし)
-  const controlButtonText = ledStatus === 'OFF' ? 'ONにする 🟢' : 'OFFにする 🔴';
-  const controlButtonStyle = { 
-    backgroundColor: ledStatus === 'OFF' ? 'green' : 'red', 
-    color: 'white',
-  };
+    return () => {
+      ws.close();
+    };
+  }, []);
 
-  // ホームに戻るボタンのスタイル (変更なし)
-  const homeButtonStyle = {
-    backgroundColor: '#007bff', 
-    color: 'white',
-  };
+  // LED ON/OFFトグル
+  const toggleLed = () => {
+    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+      console.error('WebSocketが接続されていません。');
+      setStatus('サーバー切断 (コマンド送信失敗)');
+      return;
+    }
 
-  // 位置情報テストボタンのスタイル
-  const testButtonStyle = {
-    // ON/OFF状態に応じてボタンの色を変更
-    backgroundColor: isTesting ? '#ff5555' : '#17a2b8', 
+    const newStatus = ledStatus === 'ON' ? 'OFF' : 'ON';
+    const command = newStatus === 'ON' ? 'cut_on' : 'cut_off';
+    const message = { command };
+
+    try {
+      wsRef.current.send(JSON.stringify(message));
+      setLedStatus(newStatus);
+      console.log(`コマンド送信: ${command} (${newStatus}へ)`);
+    } catch (e) {
+      console.error(`コマンド送信エラー (${command}):`, e);
+      alert(`コマンド送信エラー: ${command}`);
+    }
+  };
+
+  return { ledStatus, status, toggleLed, wsRef, gpsPosition, setGpsPosition };
+};
+
+function AppMain() {
+  const navigate = useNavigate();
+  const { ledStatus, status, toggleLed, wsRef, gpsPosition, setGpsPosition } = useLedControl();
+  const [isTesting, setIsTesting] = useState(false);
+  const timeoutRef = useRef(null);
+
+  // ホームに戻る際にOFFコマンドを送信
+  const handleGoToHome = () => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      const offCommand = { command: 'cut_off' };
+      try {
+        wsRef.current.send(JSON.stringify(offCommand));
+        console.log('ホーム遷移前にOFFコマンドを送信しました: cut_off');
+      } catch (e) {
+        console.log('OFFコマンド送信エラー:', e);
+      }
+    }
+    navigate('/');
+  };
+
+  // ランダム座標移動テスト
+  const handleLocationTestClick = () => {
+    if (isTesting) {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+      setGpsPosition(INITIAL_POSITION);
+      setIsTesting(false);
+      console.log('[テスト終了] ランダム移動を停止し、座標を初期位置に戻しました。');
+      return;
+    }
+
+    const getRandomPosition = () => {
+      const randomIndex = Math.floor(Math.random() * KUNIBIKI_MESSE_AREA_POSITIONS.length);
+      return KUNIBIKI_MESSE_AREA_POSITIONS[randomIndex];
+    };
+
+    const recursiveMove = (isFiveSeconds = true) => {
+      const newPos = getRandomPosition();
+      setGpsPosition(newPos);
+      const delay = isFiveSeconds ? 5000 : 3000;
+      console.log(`[ランダム移動] ${isFiveSeconds ? '5秒' : '3秒'}待機後移動: ${newPos}`);
+
+      timeoutRef.current = setTimeout(() => {
+        recursiveMove(!isFiveSeconds);
+      }, delay);
+    };
+
+    setIsTesting(true);
+    console.log('[テスト開始] 座標ランダム移動を開始します (5秒/3秒繰り返し)');
+    recursiveMove(true);
+  };
+
+  const handleCutControlClick = toggleLed;
+
+  // 緊急停止ボタン (現在動作は無効化)
+  const handleButton2Click = () => {
+    console.log('ボタン 2 (緊急停止) がクリックされました (現在、動作は無効化されています)');
+  };
+
+  const handleButton3Click = handleLocationTestClick;
+  const handleButton4Click = handleGoToHome;
+
+  // ボタンテキストとスタイル
+  const controlButtonText = ledStatus === 'OFF' ? '竹を切る🎋' : '終了🛑';
+  const controlButtonStatusText = ledStatus === 'OFF' ? '状態:OFF' : '状態:ON';
+
+  const controlButtonStyle = {
+    backgroundColor: ledStatus === 'OFF' ? 'green' : 'red',
     color: 'white',
- };
+  };
 
+  const emergencyStopButtonStyle = {
+    backgroundColor: ledStatus === 'ON' ? 'red' : '#6c757d',
+    color: 'white',
+  };
 
-  return (
-    <div className="app-main-container">
-      <header className="app-header">
-        <img src={headerLogo} alt="ヘッダーロゴ" className="header-logo" />
-      </header>
-      
-      <div className="content-and-sidebar-wrapper">
-        
-        <div className="sidebar-buttons">
-          {/* ボタン 1: 制御トグル */}
-          <button 
-            className="sidebar-button" 
-            onClick={handleCutControlClick}
-            style={controlButtonStyle} 
-          >
-            制御: {controlButtonText}
-          </button>
-          
-          {/* ボタン 2 */}
-          <button className="sidebar-button" onClick={handleButton2Click}>
-            ボタン 2
-          </button>
-          
-          {/* ボタン 3: ホームに戻る */}
-          <button 
-            className="sidebar-button" 
-            onClick={handleButton3Click}
-            style={homeButtonStyle} 
-          >
-            🏠 ホームに戻る
-          </button>
+  const isEmergencyStopDisabled = ledStatus === 'OFF';
 
-          {/* 4つ目のボタン: 位置情報テスト (トグル動作) */}
-          <button 
-            className="sidebar-button" 
-            onClick={handleButton4Click}
-            style={testButtonStyle}
-            // disabled は不要。トグルなのでONの時も押せる必要がある
-          >
-            {isTesting ? '🔴 テスト停止' : '🟢 位置情報テスト開始'}
-          </button>
-        </div>
+  const testButtonStyle = {
+    backgroundColor: '#17a2b8',
+    color: 'white',
+  };
 
-        <main className="app-main-content">
-            <WebcamStream />
+  const homeButtonStyle = {
+    backgroundColor: '#007bff',
+    color: 'white',
+  };
 
-            <div className="overlay-container">
-                
-                <GpsMap position={gpsPosition}/> 
+  return (
+    <div className="app-main-container">
+      <header className="app-header">
+        <img src={headerLogo} alt="ヘッダーロゴ" className="header-logo" />
+      </header>
 
-                <div className="status-display">
-                    <h3>トラッカー状態: {status} | 制御状態: {ledStatus}</h3>
-                </div>
-            
-            </div>
-        </main>
-      </div>
-    </div>
-  );
+      <div className="content-and-sidebar-wrapper">
+        <div className="sidebar-buttons">
+          <button
+            className="sidebar-button"
+            onClick={handleCutControlClick}
+            style={controlButtonStyle}
+          >
+            {controlButtonText}
+            <br />
+            {controlButtonStatusText}
+          </button>
+
+          <button
+            className="sidebar-button"
+            onClick={handleButton2Click}
+            style={emergencyStopButtonStyle}
+            disabled={isEmergencyStopDisabled}
+          >
+            緊急停止🚨<br />ボタン
+          </button>
+
+          <button
+            className="sidebar-button"
+            onClick={handleButton3Click}
+            style={testButtonStyle}
+          >
+            位置情報<br />読み込み🔄
+          </button>
+
+          <button
+            className="sidebar-button"
+            onClick={handleButton4Click}
+            style={homeButtonStyle}
+          >
+            ホームへ<br />戻る🏠
+          </button>
+        </div>
+
+        <main className="app-main-content">
+          <WebcamStream />
+          <div className="overlay-container">
+            <GpsMap position={gpsPosition} />
+            {/* このdivを消せばテキストを消せる（本番は削除予定） */}
+            <div className="status-display">
+              <h3>
+                トラッカー状態: {status} | 制御状態: {ledStatus}
+              </h3>
+            </div>
+
+          </div>
+        </main>
+      </div>
+    </div>
+  );
 }
 
 export default AppMain;

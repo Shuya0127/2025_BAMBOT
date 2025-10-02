@@ -22,7 +22,7 @@ body {
 .app-header {
   background-color: white;
   padding: 10px 20px;
-  /* ⭐ ロゴ中央配置のための Flexbox を適用 (App.jsxのヘッダーに適用されます) ⭐ */
+  /* ロゴ中央配置のための Flexbox を適用 */
   display: flex;
   justify-content: center; /* 水平方向の中央揃え */
   align-items: center; /* 垂直方向の中央揃え */
@@ -76,8 +76,10 @@ body {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  padding: 15px 30px; /* パディングを増やして大きく見せる */
-  font-size: 20px; /* フォントサイズを大きく */
+  /* ★サイズ拡大の変更点★ */
+  padding: 25px 50px; /* パディングを増やして、ボタンの縦横を大きくする */
+  font-size: 28px; /* フォントサイズを大きくする */
+  /* ★変更点終わり★ */
   font-weight: bold; /* 文字を強調 */
   letter-spacing: 1px; /* 文字間を少し開ける */
   cursor: pointer;
