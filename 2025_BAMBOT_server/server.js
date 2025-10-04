@@ -3,7 +3,7 @@ const { WebSocketServer } = require('ws');
 const http = require('http');
 
 // 【要修正！】ESP32受信機が接続されているPCのシリアルポート名
-const PORT_NAME = 'COM5'; // ⚠️ 環境に合わせて変更してください
+const PORT_NAME = 'COM6'; // ⚠️ 環境に合わせて変更してください
 
 const BAUD_RATE = 115200;
 const WS_PORT = 8080; // WebSocketサーバーが使用するポート

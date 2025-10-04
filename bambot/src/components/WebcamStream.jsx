@@ -8,10 +8,14 @@ export default function WebcamStream() {
 
   useEffect(() => {
     let mounted = true;
-    (async () => {
+    let retryTimer;
+
+    async function connect() {
       try {
         setStatus("connecting");
-        const OFFER_URL = "http://192.168.10.16:8080/offer"; // ←PiのIP
+
+        const OFFER_URL = "http://172.20.10.3:8080/offer"; // ← PiのIPに合わせる
+
         await startViewer({
           offerUrl: OFFER_URL,
           onStream: (stream) => {
@@ -20,13 +24,23 @@ export default function WebcamStream() {
             videoRef.current.play?.().catch(() => {});
           },
         });
+
         setStatus("playing");
       } catch (e) {
         console.error("WebRTC接続失敗", e);
         setStatus("error");
+        // 数秒後に自動リトライ
+        retryTimer = setTimeout(connect, 3000);
       }
-    })();
-    return () => { mounted = false; stopViewer(); };
+    }
+
+    connect();
+
+    return () => {
+      mounted = false;
+      clearTimeout(retryTimer);
+      stopViewer();
+    };
   }, []);
 
   return (
