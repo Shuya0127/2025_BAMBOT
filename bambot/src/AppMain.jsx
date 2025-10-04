@@ -22,20 +22,20 @@ const KUNIBIKI_MESSE_AREA_POSITIONS = [
 ];
 
 
-// WebSocket接続とLED/GPS制御のロジック (変更なし)
+// WebSocket接続とLED/GPS制御のロジック
 const useLedControl = () => {
   const [ledStatus, setLedStatus] = useState('OFF');
   const wsRef = useRef(null);
-  const [status, setStatus] = useState('サーバー接続待機中...');
+  const [status, setStatus] = useState('');
   const [gpsPosition, setGpsPosition] = useState(INITIAL_POSITION);
 
   useEffect(() => {
-    const ws = new WebSocket('ws://localhost:8080');
+    // WebSocket接続はlocalhost:8080のNode.jsサーバーを想定
+    const ws = new WebSocket('ws://localhost:8080'); 
     wsRef.current = ws;
 
     ws.onopen = () => {
       console.log('WebSocket接続成功');
-      setStatus('サーバー接続済み');
     };
 
     ws.onmessage = (event) => {
@@ -45,26 +45,23 @@ const useLedControl = () => {
         if (data.type === 'gps_data') {
           if (data.status === 'ok') {
             setStatus(`GPS FIX (${data.sats}衛星) - 有効`);
-          } else if (data.status === 'error') {
-            setStatus(`❌ GPSエラー: ${data.message} (衛星: ${data.sats})`);
           }
         }
 
         const lat = parseFloat(data.lat);
         const lng = parseFloat(data.lng);
+        // リアルタイムGPSデータを受信し、有効な数値であれば位置を更新
         if (data.type === 'gps_data' && data.status === 'ok' && !isNaN(lat) && !isNaN(lng)) {
-          setGpsPosition([lat, lng]);
+          setGpsPosition([lat, lng]); 
           console.log('AppMain: WebSocket GPS Update:', [lat, lng]);
         }
       } catch (e) {
         console.error('データ解析エラー、不正なJSONを受信:', event.data, e);
-        setStatus('データ解析エラー');
       }
     };
 
     ws.onclose = () => {
       console.log('WebSocket接続切断');
-      setStatus('サーバー切断');
     };
 
     return () => {
@@ -117,8 +114,9 @@ function AppMain() {
     navigate('/');
   };
 
-  // ランダム座標移動テスト
+  // ランダム座標移動テスト（「位置情報読み込み🔄」ボタンの動作）
   const handleLocationTestClick = () => {
+    // 停止処理
     if (isTesting) {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
@@ -130,6 +128,7 @@ function AppMain() {
       return;
     }
 
+    // テスト開始処理
     const getRandomPosition = () => {
       const randomIndex = Math.floor(Math.random() * KUNIBIKI_MESSE_AREA_POSITIONS.length);
       return KUNIBIKI_MESSE_AREA_POSITIONS[randomIndex];
@@ -137,7 +136,8 @@ function AppMain() {
 
     const recursiveMove = (isFiveSeconds = true) => {
       const newPos = getRandomPosition();
-      setGpsPosition(newPos);
+      setGpsPosition(newPos); // テスト位置でGPS位置を上書き
+
       const delay = isFiveSeconds ? 5000 : 3000;
       console.log(`[ランダム移動] ${isFiveSeconds ? '5秒' : '3秒'}待機後移動: ${newPos}`);
 
@@ -178,19 +178,24 @@ function AppMain() {
   const isEmergencyStopDisabled = ledStatus === 'OFF';
 
   const testButtonStyle = {
-    backgroundColor: '#17a2b8',
+    backgroundColor: isTesting ? '#dc3545' : '#17a2b8', // テスト中は赤色
     color: 'white',
   };
 
+  const testButtonText = isTesting ? 'テスト停止🛑' : '位置情報<br />読み込み🔄';
+
   const homeButtonStyle = {
     backgroundColor: 'white', 
-    color: '#333', 
+    color: '#333', 
   };
 
   return (
     <div className="app-main-container">
       <header className="app-header">
         <img src={headerLogo} alt="ヘッダーロゴ" className="header-logo" />
+        <div className="status-overlay">
+            <p className="status-text">{status}</p>
+        </div>
       </header>
 
       <div className="content-and-sidebar-wrapper">
@@ -218,8 +223,8 @@ function AppMain() {
             className="sidebar-button"
             onClick={handleButton3Click}
             style={testButtonStyle}
+            dangerouslySetInnerHTML={{ __html: testButtonText }}
           >
-            位置情報<br />読み込み🔄
           </button>
 
           <button
@@ -234,10 +239,8 @@ function AppMain() {
         <main className="app-main-content">
           <WebcamStream />
           <div className="overlay-container">
-            <GpsMap position={gpsPosition} />
-            {/* このdivを消せばテキストを消せる（本番は削除予定） */}
-            
-
+            {/* GPS位置情報はAppMainからプロップスで渡す */}
+            <GpsMap position={gpsPosition} /> 
           </div>
         </main>
       </div>

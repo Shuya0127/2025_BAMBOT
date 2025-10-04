@@ -1,53 +1,178 @@
-/* ----------------------------------- */
-/* Manual.css */
-/* ----------------------------------- */
-
-/* ページ全体（bodyまたはManualコンポーネントの親要素）の基本的な設定 */
-.manual-container {
-    /* 画面いっぱいに広げ、中央にコンテンツを配置するためのFlexbox設定 */
-    display: flex;
-    flex-direction: column; /* 要素を縦に並べる */
-    align-items: center;    /* 水平方向（X軸）の中央揃え */
-    justify-content: center; /* 垂直方向（Y軸）の中央揃え */
-    min-height: 100vh;      /* ビューポートの高さ全体を使う */
-    text-align: center;
-    padding: 20px;
-    background-color: #f0f0f0; /* 背景色を薄いグレーに設定（任意） */
+/* ページ全体 */
+.manual-page {
+    background-color: #eaf6e3;
 }
 
-/* タイトル (h1) のスタイル */
-.manual-title {
+/* サイドバー */
+.manual-page .sidebar-buttons {
+    width: 150px;
+    background-color: #d6f5d6;
+    box-shadow: 3px 0 7.5px rgba(0, 0, 0, 0.15);
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+/* サイドバーのタイトル */
+.manual-page .sidebar-button-list-title {
+    background-color: transparent;
+    color: #2e7d32;
+    width: 100%;
+    text-align: center;
+    padding: 20px 0;
+    font-size: 1.1em;
+    font-weight: bold;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    line-height: 1.2;
+    box-sizing: border-box;
+}
+
+/* サイドバーの通常ボタン */
+.manual-page .sidebar-buttons .sidebar-button {
+    border: none;
+    background-color: #f0f0f0;
+    color: #333;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    text-align: center;
+    transition: all 0.2s ease-in-out;
+}
+
+/* ホバー */
+.manual-page .sidebar-buttons .sidebar-button:hover {
+    background-color: #e0e0e0;
+}
+
+/* 選択中 */
+.manual-page .sidebar-buttons .sidebar-button.active {
+    background-color: #38761d;
+    color: white;
+    font-weight: bold;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    transform: scale(1.05);
+}
+
+/* メイン画面に戻るボタン */
+.manual-page .sidebar-buttons .main-back-button {
+    border: none;
+    background-color: #4caf50;
+    color: white;
+    padding: 12px 15px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    text-align: center;
+    transition: all 0.2s ease-in-out;
+}
+
+.manual-page .sidebar-buttons .main-back-button:hover {
+    background-color: #45a049;
+    transform: scale(1.05);
+}
+
+/* メインコンテンツ */
+.manual-page .manual-content-wrapper {
+    width: 90%;
+    max-width: 800px;
+    padding: 30px;
+    margin-bottom: 80px;
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+    text-align: left;
+}
+
+/* 中央寄せ + ヘッダーとの隙間 */
+.manual-page .app-main-content {
+    flex-grow: 1;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    overflow-y: auto;
+    margin-top: 20px;
+    min-height: calc(100vh - 40px - 20px);
+}
+
+/* マニュアルタイトル */
+.manual-page .manual-title {
     font-size: 2.5em;
     color: #333;
-    margin-bottom: 30px;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 3px solid #dee2e6;
 }
 
-/* コンテンツ（pタグなど）のスタイル */
-.manual-content {
+/* マニュアル本文 */
+.manual-page .manual-content-text {
     font-size: 1.1em;
+    line-height: 1.8;
     color: #555;
-    max-width: 600px;
-    line-height: 1.6;
     margin-bottom: 40px;
 }
 
-/* 戻るボタンのスタイル */
-/* App.jsxの 'center-button' のデザインを再現するように調整してください */
-.manual-back-button {
-    padding: 12px 40px;
-    font-size: 1.1em;
-    font-weight: bold;
-    cursor: pointer;
-    
-    /* デザイン例: スタートボタンのような目立つスタイル */
-    background-color: #007bff; /* 青色（AppMainのボタンに近い色を想定） */
-    color: white;
-    border: none;
-    border-radius: 8px; /* 角丸 */
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* 影 */
-    transition: background-color 0.3s ease; /* ホバー時のアニメーション */
+/* リスト */
+.manual-page .manual-content-text ul {
+    list-style-type: disc;
+    padding-left: 20px;
+    margin-top: 10px;
 }
 
-.manual-back-button:hover {
-    background-color: #0056b3; /* ホバーで少し濃い青にする */
+/* 複数ボタンを横並び */
+.manual-page .manual-button-group {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+/* マニュアル内の戻るボタン */
+.manual-page .manual-back-button {
+    width: 250px;
+    text-align: center;
+    padding: 20px 40px;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    background-color: rgba(255, 255, 255, 0.85);
+    color: #38761d;
+    border: 2px solid #38761d;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease-in-out;
+}
+
+.manual-page .manual-back-button:hover {
+    background-color: #38761d;
+    color: white;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+    transform: scale(1.05);
+}
+
+/* 上部の戻るボタン */
+.manual-page .manual-back-button-top {
+    width: 100%;
+    margin-bottom: 15px;
+    text-align: center;
+    padding: 15px;
+    font-weight: bold;
+    background-color: rgba(255, 255, 255, 0.85);
+    color: #38761d;
+    border: 2px solid #38761d;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.manual-page .manual-back-button-top:hover {
+    background-color: #38761d;
+    color: white;
+    transform: scale(1.05);
 }

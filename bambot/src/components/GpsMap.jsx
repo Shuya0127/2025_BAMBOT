@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react'; // useStateを削除
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -11,24 +11,23 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
 });
 
-// マップの初期位置（AppMainと共有）
+// マップの初期位置
 const INITIAL_POSITION = [35.6895, 139.6917];
 
 // MapRefresher コンポーネント（省略）
-const MapRefresher = () => {
-  /* ... */
-  return null;
-};
+const MapRefresher = () => null;
 
 // MapViewUpdater: centerが変更されたらマップビューを移動
 const MapViewUpdater = ({ center }) => {
   const map = useMap();
 
   useEffect(() => {
+    // 初期位置からの移動かチェック
     const isNewPosition =
       center[0] !== INITIAL_POSITION[0] || center[1] !== INITIAL_POSITION[1];
 
     if (isNewPosition && !isNaN(center[0]) && !isNaN(center[1])) {
+      // マップビューを新しい位置に設定し、ズームレベルを最低16に保つ
       map.setView(center, Math.max(map.getZoom(), 16));
     }
   }, [center, map]);
@@ -42,10 +41,10 @@ const LiveMarker = ({ position }) => {
 
   useEffect(() => {
     if (markerRef.current && !isNaN(position[0]) && !isNaN(position[1])) {
-      // Leaflet APIの setLatLng で位置を更新
+      // マーカーの位置を更新
       markerRef.current.setLatLng(position);
 
-      // ポップアップの内容を更新
+      // ポップアップの内容も更新
       const popup = markerRef.current.getPopup();
       if (popup) {
         const [lat, lng] = position;
@@ -67,9 +66,10 @@ const LiveMarker = ({ position }) => {
   );
 };
 
-// GpsMap コンポーネント
+// GpsMap コンポーネント (AppMainからpositionプロップスを受け取るように修正)
 const GpsMap = ({ position }) => {
   const MAP_SIZE = '220px';
+  // 内部の useState(INITIAL_POSITION) と useEffect (WebSocket接続) は削除
 
   return (
     <div
@@ -97,7 +97,8 @@ const GpsMap = ({ position }) => {
           />
 
           <MapRefresher />
-          <MapViewUpdater center={position} />
+          {/* AppMainから渡されたpositionを使用 */}
+          <MapViewUpdater center={position} /> 
           <LiveMarker position={position} />
         </MapContainer>
       </div>
