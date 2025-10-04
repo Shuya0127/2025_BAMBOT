@@ -171,7 +171,7 @@ function AppMain() {
   };
 
   const emergencyStopButtonStyle = {
-    backgroundColor: ledStatus === 'ON' ? 'red' : '#6c757d',
+    backgroundColor: ledStatus === 'ON' ? '#ffc107' : '#6c757d',
     color: 'white',
   };
 
@@ -183,8 +183,8 @@ function AppMain() {
   };
 
   const homeButtonStyle = {
-    backgroundColor: '#007bff',
-    color: 'white',
+    backgroundColor: 'white', 
+    color: '#333', 
   };
 
   return (

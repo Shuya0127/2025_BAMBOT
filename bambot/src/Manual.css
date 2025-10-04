@@ -1,0 +1,53 @@
+/* ----------------------------------- */
+/* Manual.css */
+/* ----------------------------------- */
+
+/* ページ全体（bodyまたはManualコンポーネントの親要素）の基本的な設定 */
+.manual-container {
+    /* 画面いっぱいに広げ、中央にコンテンツを配置するためのFlexbox設定 */
+    display: flex;
+    flex-direction: column; /* 要素を縦に並べる */
+    align-items: center;    /* 水平方向（X軸）の中央揃え */
+    justify-content: center; /* 垂直方向（Y軸）の中央揃え */
+    min-height: 100vh;      /* ビューポートの高さ全体を使う */
+    text-align: center;
+    padding: 20px;
+    background-color: #f0f0f0; /* 背景色を薄いグレーに設定（任意） */
+}
+
+/* タイトル (h1) のスタイル */
+.manual-title {
+    font-size: 2.5em;
+    color: #333;
+    margin-bottom: 30px;
+}
+
+/* コンテンツ（pタグなど）のスタイル */
+.manual-content {
+    font-size: 1.1em;
+    color: #555;
+    max-width: 600px;
+    line-height: 1.6;
+    margin-bottom: 40px;
+}
+
+/* 戻るボタンのスタイル */
+/* App.jsxの 'center-button' のデザインを再現するように調整してください */
+.manual-back-button {
+    padding: 12px 40px;
+    font-size: 1.1em;
+    font-weight: bold;
+    cursor: pointer;
+    
+    /* デザイン例: スタートボタンのような目立つスタイル */
+    background-color: #007bff; /* 青色（AppMainのボタンに近い色を想定） */
+    color: white;
+    border: none;
+    border-radius: 8px; /* 角丸 */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* 影 */
+    transition: background-color 0.3s ease; /* ホバー時のアニメーション */
+}
+
+.manual-back-button:hover {
+    background-color: #0056b3; /* ホバーで少し濃い青にする */
+}

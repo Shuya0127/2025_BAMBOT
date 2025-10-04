@@ -1,0 +1,136 @@
+#include <WiFi.h>
+#include <esp_now.h>
+#include <esp_wifi.h>
+
+// ★ 相手側のMACアドレス (GPS送信機 / コマンド送信先) を設定
+// 🚨 あなたの送信機ESP32のMACアドレスに置き換えてください！
+uint8_t peerMac_Sender[] = {0x24, 0x0A, 0xC4, 0xF2, 0x6E, 0x74}; // 送信機のMACアドレス
+
+// === 1. データ構造体定義 ===
+
+// GPS受信データ構造体 (送信機と完全に一致)
+typedef struct struct_message {
+  bool is_valid_gps;    
+  double latitude;    
+  double longitude;   
+  int satellites;     
+} struct_message;
+
+// 制御コマンド送信用の構造体 (送信機へ送る)
+typedef struct struct_command {
+  char type[10];      // "LED_CMD"
+  bool led_state;     // true: ON (cut_on), false: OFF (cut_off)
+} struct_command;
+
+// 受信コールバックで使用するデータ構造体
+struct_message incomingGpsData;
+
+// === 2. コールバック関数定義 ===
+
+// 送信完了コールバック (バージョンアップ対応済み)
+void OnDataSent(const wifi_tx_info_t *info, esp_now_send_status_t status) {
+  Serial.print("LEDコマンド送信結果: ");
+  Serial.println(status == ESP_NOW_SEND_SUCCESS ? "成功" : "失敗");
+}
+
+// 受信コールバック関数 (GPSデータ処理: バージョンアップ対応済み)
+void OnDataRecv(const esp_now_recv_info_t *info, const uint8_t *incomingData, int len) {
+  
+  if (len == sizeof(incomingGpsData)) {
+    memcpy(&incomingGpsData, incomingData, sizeof(incomingGpsData));
+
+    // Node.jsが解析するためのJSON形式で出力
+    Serial.print("{\"type\":\"gps_data\",");
+
+    if (incomingGpsData.is_valid_gps) {
+        Serial.print("\"status\":\"ok\",");
+        Serial.print("\"lat\":");
+        Serial.print(incomingGpsData.latitude, 6); 
+        Serial.print(",\"lng\":");
+        Serial.print(incomingGpsData.longitude, 6);
+        Serial.print(",\"sats\":");
+        Serial.print(incomingGpsData.satellites);
+    } else {
+        Serial.print("\"status\":\"error\",");
+        Serial.print("\"message\":\"位置情報を取得できませんでした\",");
+        Serial.print("\"sats\":");
+        Serial.print(incomingGpsData.satellites);
+    }
+    
+    Serial.println("}"); 
+  }
+}
+
+// === 3. Node.jsからのシリアルコマンド処理関数 ===
+void processSerialCommand() {
+  static String inputString = "";
+  
+  while (Serial.available()) {
+    char inChar = Serial.read();
+    inputString += inChar;
+    
+    // 改行文字でコマンドの終了を判断
+    if (inChar == '\n' || inChar == '\r') {
+      inputString.trim(); 
+
+      // 🚨 変更点: "cut_on" または "cut_off" コマンドを受信したか確認
+      if (inputString.equals("cut_on") || inputString.equals("cut_off")) {
+        
+        // ESP-NOWで送信するための構造体を準備
+        struct_command cmd;
+        strcpy(cmd.type, "LED_CMD"); 
+
+        if (inputString.equals("cut_on")) {
+          cmd.led_state = true;
+          Serial.println("Node.jsからcut_onコマンド受信 -> ESP-NOW送信");
+        } else {
+          cmd.led_state = false;
+          Serial.println("Node.jsからcut_offコマンド受信 -> ESP-NOW送信");
+        }
+        
+        // ESP-NOWで送信機へコマンドを送信
+        esp_now_send(peerMac_Sender, (uint8_t *)&cmd, sizeof(cmd));
+      } 
+      
+      inputString = ""; // 次のコマンドのためにリセット
+    }
+  }
+}
+
+
+void setup() {
+  Serial.begin(115200);
+  Serial.println("\n=== ESP32 GPS/ESP-NOW 受信機 起動 (双方向モード) ===");
+  Serial.print("このESP32のMACアドレス: ");
+  // 🚨 あなたのこのESP32のMACアドレスをメモしてください！
+  Serial.println(WiFi.macAddress()); 
+
+  WiFi.mode(WIFI_STA);
+
+  if (esp_now_init() != ESP_OK) {
+    Serial.println("ESP-NOW初期化失敗");
+    return;
+  }
+
+  // 送受信両方のコールバックを登録
+  esp_now_register_recv_cb(OnDataRecv); 
+  esp_now_register_send_cb(OnDataSent); 
+
+  // ピアの追加 (コマンドを送信するために相手(送信機)を登録)
+  esp_now_peer_info_t peerInfo;
+  memset(&peerInfo, 0, sizeof(peerInfo)); 
+  memcpy(peerInfo.peer_addr, peerMac_Sender, 6);
+  peerInfo.channel = 0;
+  peerInfo.encrypt = false;
+  
+  if (esp_now_add_peer(&peerInfo) != ESP_OK) {
+    Serial.println("ピア追加失敗");
+  } else {
+    Serial.println("GPSデータ受信待機中 & コマンド待機中...");
+  }
+}
+
+void loop() {
+  // Node.jsからのシリアル入力を常に監視
+  processSerialCommand();
+}

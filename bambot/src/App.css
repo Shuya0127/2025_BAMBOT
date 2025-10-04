@@ -70,20 +70,31 @@ body {
   display: block; /* 画像の下の隙間をなくすために追加 */
 }
 
-/* スタートボタンのスタイル */
-.center-button {
+.button-group-overlay {
+  /* image-containerの中央にグループ全体を絶対配置 */
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);
-  /* ★サイズ拡大の変更点★ */
+  transform: translate(-50%, -50%); /* グループ全体を真中央に移動 */
+  
+  /* Flexboxで中のボタンを縦に並べ、隙間を作る */
+  display: flex;
+  flex-direction: column; /* 縦並び */
+  align-items: center;    /* 横方向の中央揃え */
+  gap: 20px;              /* ボタン間の隙間を20pxに設定 */
+  z-index: 10;            /* 背景画像の上に表示 */
+}
+
+.center-button {
+  width: 250px; /* 👈 ボタンの横幅を固定 (例として250pxに設定) */
+  text-align: center; 
+
+  /* サイズとデザインはそのまま維持 */
   padding: 25px 50px; /* パディングを増やして、ボタンの縦横を大きくする */
   font-size: 28px; /* フォントサイズを大きくする */
-  /* ★変更点終わり★ */
   font-weight: bold; /* 文字を強調 */
   letter-spacing: 1px; /* 文字間を少し開ける */
   cursor: pointer;
-  z-index: 10;
   
   /* デザインの変更 */
   background-color: rgba(255, 255, 255, 0.85); /* 半透明の白背景 */
@@ -99,5 +110,6 @@ body {
   background-color: #38761d; /* 背景を緑色に反転 */
   color: white; /* 文字を白色に反転 */
   box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3); /* 影を強調 */
-  transform: translate(-50%, -50%) scale(1.05); /* わずかに拡大 */
+  /* transformから translate(-50%, -50%) を削除 */
+  transform: scale(1.05); /* わずかに拡大 */
 }
