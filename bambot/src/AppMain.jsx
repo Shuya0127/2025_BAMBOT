@@ -5,6 +5,10 @@ import './App.css';
 import headerLogo from './img/logo.png';
 import GpsMap from './components/GpsMap';
 
+
+// 新規追加: カメラ映像を表示するコンポーネント
+import WebcamStream from "./components/WebcamStream";
+
 // GpsMapと共有する初期位置（都庁）
 const INITIAL_POSITION = [35.6895, 139.6917];
 
@@ -17,45 +21,8 @@ const KUNIBIKI_MESSE_AREA_POSITIONS = [
   [35.469241, 133.066954],
 ];
 
-// カメラ映像を表示するコンポーネント
-const WebcamStream = () => {
-  const videoRef = useRef(null);
 
-  useEffect(() => {
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      navigator.mediaDevices
-        .getUserMedia({ video: true })
-        .then((stream) => {
-          if (videoRef.current) {
-            videoRef.current.srcObject = stream;
-          }
-        })
-        .catch((err) => {
-          console.error('カメラへのアクセスに失敗しました: ', err);
-          alert('カメラへのアクセスが拒否されました。');
-        });
-
-      return () => {
-        if (videoRef.current && videoRef.current.srcObject) {
-          const stream = videoRef.current.srcObject;
-          stream.getTracks().forEach((track) => track.stop());
-        }
-      };
-    }
-  }, []);
-
-  return (
-    <video
-      ref={videoRef}
-      className="background-video"
-      autoPlay
-      playsInline
-      muted
-    />
-  );
-};
-
-// WebSocket接続とLED/GPS制御のロジック
+// WebSocket接続とLED/GPS制御のロジック (変更なし)
 const useLedControl = () => {
   const [ledStatus, setLedStatus] = useState('OFF');
   const wsRef = useRef(null);
