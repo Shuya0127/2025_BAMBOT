@@ -4,15 +4,11 @@ import './AppMain.css';
 import './App.css';
 import headerLogo from './img/logo.png';
 import GpsMap from './components/GpsMap';
-
-
-// 新規追加: カメラ映像を表示するコンポーネント
 import WebcamStream from "./components/WebcamStream";
 
 // GpsMapと共有する初期位置（都庁）
 const INITIAL_POSITION = [35.6895, 139.6917];
 
-// くにびきメッセ周辺の5つのランダム座標リスト
 const KUNIBIKI_MESSE_AREA_POSITIONS = [
   [35.469333, 133.067056],
   [35.469440, 133.067150],
@@ -21,21 +17,20 @@ const KUNIBIKI_MESSE_AREA_POSITIONS = [
   [35.469241, 133.066954],
 ];
 
-
-// WebSocket接続とLED/GPS制御のロジック (変更なし)
+// WebSocket接続とLED/GPS制御のロジック
 const useLedControl = () => {
   const [ledStatus, setLedStatus] = useState('OFF');
   const wsRef = useRef(null);
-  const [status, setStatus] = useState('サーバー接続待機中...');
+  const [status, setStatus] = useState('');
   const [gpsPosition, setGpsPosition] = useState(INITIAL_POSITION);
 
   useEffect(() => {
-    const ws = new WebSocket('ws://localhost:8080');
+    // WebSocket接続はlocalhost:8080のNode.jsサーバーを想定
+    const ws = new WebSocket('ws://localhost:8080'); 
     wsRef.current = ws;
 
     ws.onopen = () => {
       console.log('WebSocket接続成功');
-      setStatus('サーバー接続済み');
     };
 
     ws.onmessage = (event) => {
@@ -45,26 +40,23 @@ const useLedControl = () => {
         if (data.type === 'gps_data') {
           if (data.status === 'ok') {
             setStatus(`GPS FIX (${data.sats}衛星) - 有効`);
-          } else if (data.status === 'error') {
-            setStatus(`❌ GPSエラー: ${data.message} (衛星: ${data.sats})`);
           }
         }
 
         const lat = parseFloat(data.lat);
         const lng = parseFloat(data.lng);
+        // リアルタイムGPSデータを受信し、有効な数値であれば位置を更新
         if (data.type === 'gps_data' && data.status === 'ok' && !isNaN(lat) && !isNaN(lng)) {
-          setGpsPosition([lat, lng]);
+          setGpsPosition([lat, lng]); 
           console.log('AppMain: WebSocket GPS Update:', [lat, lng]);
         }
       } catch (e) {
         console.error('データ解析エラー、不正なJSONを受信:', event.data, e);
-        setStatus('データ解析エラー');
       }
     };
 
     ws.onclose = () => {
       console.log('WebSocket接続切断');
-      setStatus('サーバー切断');
     };
 
     return () => {
@@ -117,7 +109,6 @@ function AppMain() {
     navigate('/');
   };
 
-  // ランダム座標移動テスト
   const handleLocationTestClick = () => {
     if (isTesting) {
       if (timeoutRef.current) {
@@ -126,10 +117,10 @@ function AppMain() {
       }
       setGpsPosition(INITIAL_POSITION);
       setIsTesting(false);
-      console.log('[テスト終了] ランダム移動を停止し、座標を初期位置に戻しました。');
       return;
     }
 
+    // テスト開始処理
     const getRandomPosition = () => {
       const randomIndex = Math.floor(Math.random() * KUNIBIKI_MESSE_AREA_POSITIONS.length);
       return KUNIBIKI_MESSE_AREA_POSITIONS[randomIndex];
@@ -137,25 +128,37 @@ function AppMain() {
 
     const recursiveMove = (isFiveSeconds = true) => {
       const newPos = getRandomPosition();
-      setGpsPosition(newPos);
+      setGpsPosition(newPos); 
       const delay = isFiveSeconds ? 5000 : 3000;
-      console.log(`[ランダム移動] ${isFiveSeconds ? '5秒' : '3秒'}待機後移動: ${newPos}`);
-
       timeoutRef.current = setTimeout(() => {
         recursiveMove(!isFiveSeconds);
       }, delay);
     };
-
     setIsTesting(true);
-    console.log('[テスト開始] 座標ランダム移動を開始します (5秒/3秒繰り返し)');
     recursiveMove(true);
   };
 
   const handleCutControlClick = toggleLed;
 
-  // 緊急停止ボタン (現在動作は無効化)
+  // 緊急停止ボタン
   const handleButton2Click = () => {
-    console.log('ボタン 2 (緊急停止) がクリックされました (現在、動作は無効化されています)');
+    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+      console.error('WebSocketが接続されていません。');
+      setStatus('サーバー切断 (緊急停止送信失敗)');
+      return;
+    }
+
+    const command = 'emergencystop';
+    const message = { command };
+
+    try {
+      wsRef.current.send(JSON.stringify(message));
+      console.log('緊急停止コマンド送信:', command);
+      setStatus('緊急停止コマンドを送信しました');
+    } catch (e) {
+      console.error(`緊急停止コマンド送信エラー:`, e);
+      alert('緊急停止コマンド送信エラー');
+    }
   };
 
   const handleButton3Click = handleLocationTestClick;
@@ -178,19 +181,24 @@ function AppMain() {
   const isEmergencyStopDisabled = ledStatus === 'OFF';
 
   const testButtonStyle = {
-    backgroundColor: '#17a2b8',
+    backgroundColor: isTesting ? '#17a2b8' : '#17a2b8', 
     color: 'white',
   };
 
+  const testButtonText = isTesting ? '位置情報<br />読み込み🔄' : '位置情報<br />読み込み🔄';
+
   const homeButtonStyle = {
     backgroundColor: 'white', 
-    color: '#333', 
+    color: '#333', 
   };
 
   return (
     <div className="app-main-container">
       <header className="app-header">
         <img src={headerLogo} alt="ヘッダーロゴ" className="header-logo" />
+        <div className="status-overlay">
+            <p className="status-text">{status}</p>
+        </div>
       </header>
 
       <div className="content-and-sidebar-wrapper">
@@ -218,8 +226,8 @@ function AppMain() {
             className="sidebar-button"
             onClick={handleButton3Click}
             style={testButtonStyle}
+            dangerouslySetInnerHTML={{ __html: testButtonText }}
           >
-            位置情報<br />読み込み🔄
           </button>
 
           <button
@@ -234,10 +242,8 @@ function AppMain() {
         <main className="app-main-content">
           <WebcamStream />
           <div className="overlay-container">
-            <GpsMap position={gpsPosition} />
-            {/* このdivを消せばテキストを消せる（本番は削除予定） */}
-            
-
+            {/* GPS位置情報はAppMainからプロップスで渡す */}
+            <GpsMap position={gpsPosition} /> 
           </div>
         </main>
       </div>

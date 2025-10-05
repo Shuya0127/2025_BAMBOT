@@ -1,60 +1,139 @@
-/* App.css */
+/* App.css - アプリケーション全体の共通スタイルとレイアウト定義 */
 
 /* ブラウザのデフォルトの余白をリセット */
 body, html {
   margin: 0;
   padding: 0;
+  box-sizing: border-box;
 }
 
-/* 予期しない横スクロールを防止するために追加 */
+/* 予期しない横スクロールを防止 */
 body {
-  overflow-x: hidden; /* 横方向のスクロールバーを非表示にする */
+  overflow-x: hidden;
+  font-family: 'Inter', sans-serif;
 }
 
-/* アプリ全体のコンテナ。画面全体を占有し、子要素を縦に並べる。 */
-.app-container {
+/* 1. 全体コンテナ: ヘッダーとコンテンツを縦に並べる */
+.app-container, .app-main-container {
   display: flex;
   flex-direction: column;
+  justify-content: flex-start;
   min-height: 100vh; /* 画面の高さ全体を占める */
+  width: 100vw;
+  text-align: center;
+  color: #333;
+  padding: 0;
+  margin: 0;
 }
 
-/* ヘッダーのスタイル */
+/* 2. ヘッダーのスタイル */
 .app-header {
+  width: 100%;
+  padding: 15px 30px;
   background-color: white;
-  padding: 10px 20px;
-  /* ロゴ中央配置のための Flexbox を適用 */
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+  
   display: flex;
-  justify-content: center; /* 水平方向の中央揃え */
-  align-items: center; /* 垂直方向の中央揃え */
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+  position: relative;
 }
 
 /* ヘッダーの画像（ロゴ）のスタイル */
 .header-logo {
-  height: 40px; /* 画像の高さを設定 */
-  width: auto; /* 縦横比を維持 */
+  height: 40px; 
+  width: auto; 
 }
 
-/* メインコンテンツのスタイル。残りのスペースをすべて埋める。 */
-.main-content {
-  flex-grow: 1; /* 残りのスペースを埋める */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  position: relative;
+/* ヘッダー内のステータス表示エリア */
+.status-overlay {
+  position: absolute;
+  right: 30px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.status-text {
+  font-size: 14px;
+  color: #555;
   margin: 0;
-  padding: 0;
 }
 
-/* フッターのスタイル */
+
+/* 3. コンテンツとサイドバーのラッパー (AppMainのメインレイアウト) */
+.content-and-sidebar-wrapper {
+  display:flex;
+  width: 100%;
+  flex-grow: 1;
+  overflow: hidden;
+}
+
+/* 4. サイドバーボタンエリア */
+.sidebar-buttons {
+  display: flex;
+  flex-direction: column;
+  width: 130px;
+  flex-shrink: 0;
+  background-color: #e9ecef;
+  box-shadow: 3px 0 7.5px rgba(0, 0, 0, 0.15);
+  z-index: 2;
+  overflow-y: auto;
+}
+
+/* 5. 個々のサイドバーボタン */
+.sidebar-button {
+  width: 100%;
+  padding: 22px 7.5px;
+  margin: 0;
+  border: none;
+  border-bottom: 1.5px solid #dee2e6; 
+  background-color: #f1f3f5;
+  color: #495057;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  font-size: 21px;
+  box-sizing: border-box;
+  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.1);
+}
+
+.sidebar-button:last-child {
+  border-bottom: none;
+}
+
+.sidebar-button:hover {
+  background-color: #ced4da;
+  color: #212529;
+  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.1), 0 3px 8px rgba(0, 0, 0, 0.2);
+  transform: translateY(-1px);
+}
+
+/* 6. メインコンテンツエリア */
+.app-main-content {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: 0;
+  text-align: center;
+  position: relative;
+  background-color: #f8f9fa;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start; 
+  padding-top: 20px;
+}
+
+/* 7. フッターのスタイル */
 .app-footer {
-  background-color: white; /* 背景色を白色に設定 */
-  color: black; /* 文字色を黒色に設定 */
+  background-color: white; 
+  color: black; 
   padding: 3px;
   text-align: center;
   font-size: 10px;
+  flex-shrink: 0;
+  border-top: 1px solid #ddd;
 }
 
-/* 既存のスタイル */
+/* 8. App.jsxのスタート画面で使用されていたボタンと背景スタイルを維持 */
 .image-container {
   position: relative;
   width: 100%;
@@ -62,54 +141,41 @@ body {
   margin: 0;
   padding: 0;
 }
-
 .responsive-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  display: block; /* 画像の下の隙間をなくすために追加 */
+  display: block;
 }
-
 .button-group-overlay {
-  /* image-containerの中央にグループ全体を絶対配置 */
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%); /* グループ全体を真中央に移動 */
-  
-  /* Flexboxで中のボタンを縦に並べ、隙間を作る */
+  transform: translate(-50%, -50%);
   display: flex;
-  flex-direction: column; /* 縦並び */
-  align-items: center;    /* 横方向の中央揃え */
-  gap: 20px;              /* ボタン間の隙間を20pxに設定 */
-  z-index: 10;            /* 背景画像の上に表示 */
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  z-index: 10;
 }
-
 .center-button {
-  width: 250px; /* 👈 ボタンの横幅を固定 (例として250pxに設定) */
+  width: 250px;
   text-align: center; 
-
-  /* サイズとデザインはそのまま維持 */
-  padding: 25px 50px; /* パディングを増やして、ボタンの縦横を大きくする */
-  font-size: 28px; /* フォントサイズを大きくする */
-  font-weight: bold; /* 文字を強調 */
-  letter-spacing: 1px; /* 文字間を少し開ける */
+  padding: 25px 50px;
+  font-size: 28px;
+  font-weight: bold;
+  letter-spacing: 1px;
   cursor: pointer;
-  
-  /* デザインの変更 */
-  background-color: rgba(255, 255, 255, 0.85); /* 半透明の白背景 */
-  color: #38761d; /* 濃い緑色（竹林の色に合わせる） */
-  border: 2px solid #38761d; /* 緑の枠線 */
-  border-radius: 8px; /* 角を少し丸める */
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* 影をつけて立体感を出す */
-  transition: all 0.2s ease-in-out; /* ホバー時のアニメーションを追加 */
+  background-color: rgba(255, 255, 255, 0.85);
+  color: #38761d;
+  border: 2px solid #38761d;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease-in-out;
 }
-
-/* ホバーエフェクトを追加して、ボタンが押せることを分かりやすくする */
 .center-button:hover {
-  background-color: #38761d; /* 背景を緑色に反転 */
-  color: white; /* 文字を白色に反転 */
-  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3); /* 影を強調 */
-  /* transformから translate(-50%, -50%) を削除 */
-  transform: scale(1.05); /* わずかに拡大 */
+  background-color: #38761d;
+  color: white;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+  transform: scale(1.05);
 }
