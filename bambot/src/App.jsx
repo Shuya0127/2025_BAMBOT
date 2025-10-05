@@ -25,14 +25,12 @@ function App() {
         <div className="image-container">
           <img src={take} alt="背景画像" className="responsive-image" />
           
-          {/* 【修正箇所】ボタンを包むコンテナを追加し、位置と並びを制御します */}
           <div className="button-group-overlay"> 
             
             {/* スタートボタン */}
             <button 
               className="center-button" 
               onClick={handleStartClick}
-              // 【修正】インラインスタイルを削除
             >
               スタート
             </button>
@@ -46,7 +44,6 @@ function App() {
             </button>
             
           </div>
-          {/* 【修正箇所ここまで】 */}
         </div>
       </main>
     </div>

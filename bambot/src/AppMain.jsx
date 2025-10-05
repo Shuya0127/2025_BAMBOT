@@ -4,15 +4,11 @@ import './AppMain.css';
 import './App.css';
 import headerLogo from './img/logo.png';
 import GpsMap from './components/GpsMap';
-
-
-// 新規追加: カメラ映像を表示するコンポーネント
 import WebcamStream from "./components/WebcamStream";
 
 // GpsMapと共有する初期位置（都庁）
 const INITIAL_POSITION = [35.6895, 139.6917];
 
-// くにびきメッセ周辺の5つのランダム座標リスト
 const KUNIBIKI_MESSE_AREA_POSITIONS = [
   [35.469333, 133.067056],
   [35.469440, 133.067150],
@@ -114,9 +110,7 @@ function AppMain() {
     navigate('/');
   };
 
-  // ランダム座標移動テスト（「位置情報読み込み🔄」ボタンの動作）
   const handleLocationTestClick = () => {
-    // 停止処理
     if (isTesting) {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
@@ -124,7 +118,6 @@ function AppMain() {
       }
       setGpsPosition(INITIAL_POSITION);
       setIsTesting(false);
-      console.log('[テスト終了] ランダム移動を停止し、座標を初期位置に戻しました。');
       return;
     }
 
@@ -136,18 +129,13 @@ function AppMain() {
 
     const recursiveMove = (isFiveSeconds = true) => {
       const newPos = getRandomPosition();
-      setGpsPosition(newPos); // テスト位置でGPS位置を上書き
-
+      setGpsPosition(newPos); 
       const delay = isFiveSeconds ? 5000 : 3000;
-      console.log(`[ランダム移動] ${isFiveSeconds ? '5秒' : '3秒'}待機後移動: ${newPos}`);
-
       timeoutRef.current = setTimeout(() => {
         recursiveMove(!isFiveSeconds);
       }, delay);
     };
-
     setIsTesting(true);
-    console.log('[テスト開始] 座標ランダム移動を開始します (5秒/3秒繰り返し)');
     recursiveMove(true);
   };
 
@@ -178,11 +166,11 @@ function AppMain() {
   const isEmergencyStopDisabled = ledStatus === 'OFF';
 
   const testButtonStyle = {
-    backgroundColor: isTesting ? '#dc3545' : '#17a2b8', // テスト中は赤色
+    backgroundColor: isTesting ? '#17a2b8' : '#17a2b8', 
     color: 'white',
   };
 
-  const testButtonText = isTesting ? 'テスト停止🛑' : '位置情報<br />読み込み🔄';
+  const testButtonText = isTesting ? '位置情報<br />読み込み🔄' : '位置情報<br />読み込み🔄';
 
   const homeButtonStyle = {
     backgroundColor: 'white', 

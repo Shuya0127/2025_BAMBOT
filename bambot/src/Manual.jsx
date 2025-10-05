@@ -57,7 +57,13 @@ const ManualContent = ({ view, setCurrentView }) => {
           <ul>
             {manualItems.map((item) => (
               <li key={item.key}>
-                <a href="#" onClick={(e) => { e.preventDefault(); setCurrentView(item.key); }}>
+                <a
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setCurrentView(item.key);
+                  }}
+                >
                   {item.label}
                 </a>
               </li>
@@ -101,7 +107,16 @@ function Manual() {
         {/* サイドバー */}
         <div className="sidebar-buttons">
 
-          <div className="sidebar-button-list-title">ボタン一覧</div>
+          {/* 概要に戻るボタン */}
+          {currentView !== 'main' && (
+            <button
+              className="sidebar-button"
+              onClick={() => setCurrentView('main')}
+            >
+              概要に戻る
+            </button>
+          )}
+          
           {manualItems.map((item) => (
             <button
               key={item.key}
@@ -111,11 +126,13 @@ function Manual() {
               {item.label}
             </button>
           ))}
+
+          {/* メイン画面に戻るボタン */}
           <button
             onClick={handleBack}
             className="sidebar-button main-back-button"
-           >
-           メイン画面に戻る
+          >
+            メイン画面に戻る
           </button>
 
         </div>
@@ -124,14 +141,6 @@ function Manual() {
         <main className="app-main-content">
           <div className="manual-content-wrapper">
             <ManualContent view={currentView} setCurrentView={setCurrentView} />
-
-            <button
-              onClick={() => (currentView === 'main' ? handleBack() : setCurrentView('main'))}
-              className="manual-back-button"
-              style={{ marginTop: '20px' }}
-            >
-              {currentView === 'main' ? 'メイン画面に戻る' : '概要に戻る'}
-            </button>
           </div>
         </main>
 

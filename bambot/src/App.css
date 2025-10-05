@@ -86,17 +86,13 @@ body {
   padding: 22px 7.5px;
   margin: 0;
   border: none;
-  border-bottom: 1.5px solid #dee2e6;
-  
+  border-bottom: 1.5px solid #dee2e6; 
   background-color: #f1f3f5;
   color: #495057;
   cursor: pointer;
-  
   transition: all 0.2s ease-in-out;
-  
   font-size: 21px;
   box-sizing: border-box;
-  
   box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.1);
 }
 
@@ -119,8 +115,6 @@ body {
   text-align: center;
   position: relative;
   background-color: #f8f9fa;
-  
-  /* コンテンツを上部かつ中央に配置するためのFlexbox設定 */
   display: flex;
   flex-direction: column;
   align-items: center;

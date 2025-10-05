@@ -1,9 +1,8 @@
-import React, { useEffect, useRef } from 'react'; // useStateを削除
+import React, { useEffect, useRef } from 'react'; 
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
-// Leafletデフォルトアイコン設定
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
@@ -14,7 +13,7 @@ L.Icon.Default.mergeOptions({
 // マップの初期位置
 const INITIAL_POSITION = [35.6895, 139.6917];
 
-// MapRefresher コンポーネント（省略）
+// MapRefresher コンポーネント
 const MapRefresher = () => null;
 
 // MapViewUpdater: centerが変更されたらマップビューを移動
@@ -66,10 +65,9 @@ const LiveMarker = ({ position }) => {
   );
 };
 
-// GpsMap コンポーネント (AppMainからpositionプロップスを受け取るように修正)
+// GpsMap コンポーネント 
 const GpsMap = ({ position }) => {
   const MAP_SIZE = '220px';
-  // 内部の useState(INITIAL_POSITION) と useEffect (WebSocket接続) は削除
 
   return (
     <div
@@ -97,7 +95,6 @@ const GpsMap = ({ position }) => {
           />
 
           <MapRefresher />
-          {/* AppMainから渡されたpositionを使用 */}
           <MapViewUpdater center={position} /> 
           <LiveMarker position={position} />
         </MapContainer>
