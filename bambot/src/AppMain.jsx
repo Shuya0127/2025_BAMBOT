@@ -17,7 +17,6 @@ const KUNIBIKI_MESSE_AREA_POSITIONS = [
   [35.469241, 133.066954],
 ];
 
-
 // WebSocket接続とLED/GPS制御のロジック
 const useLedControl = () => {
   const [ledStatus, setLedStatus] = useState('OFF');
@@ -141,9 +140,25 @@ function AppMain() {
 
   const handleCutControlClick = toggleLed;
 
-  // 緊急停止ボタン (現在動作は無効化)
+  // 緊急停止ボタン
   const handleButton2Click = () => {
-    console.log('ボタン 2 (緊急停止) がクリックされました (現在、動作は無効化されています)');
+    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+      console.error('WebSocketが接続されていません。');
+      setStatus('サーバー切断 (緊急停止送信失敗)');
+      return;
+    }
+
+    const command = 'emergencystop';
+    const message = { command };
+
+    try {
+      wsRef.current.send(JSON.stringify(message));
+      console.log('緊急停止コマンド送信:', command);
+      setStatus('緊急停止コマンドを送信しました');
+    } catch (e) {
+      console.error(`緊急停止コマンド送信エラー:`, e);
+      alert('緊急停止コマンド送信エラー');
+    }
   };
 
   const handleButton3Click = handleLocationTestClick;
