@@ -14,7 +14,7 @@ export default function WebcamStream() {
       try {
         setStatus("connecting");
 
-        const OFFER_URL = "http://172.20.10.3:8080/offer"; // ← PiのIPに合わせる
+        const OFFER_URL = "http://192.168.10.53:8080/offer"; // ← PiのIPに合わせる
 
         await startViewer({
           offerUrl: OFFER_URL,
