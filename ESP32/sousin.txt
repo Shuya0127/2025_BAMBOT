@@ -46,7 +46,10 @@ typedef struct struct_message {
 } struct_message;
 
 struct_message myData;
-
+bool is_sequence_active = false;      // シーケンス実行状態 (ON/OFF)
+int sequence_step = 0;                // 現在のステップ番号
+unsigned long last_step_time = 0;     // 前回のステップ実行時刻
+const unsigned long STEP_DURATION = 100; // 各ステップの持続時間 (ms)
 // === 5. コールバック関数定義 ===
 
 // 送信完了コールバック (前回修正済み)
@@ -68,42 +71,35 @@ void OnDataRecv(const esp_now_recv_info_t *info, const uint8_t *incomingData, in
     // データタイプが "LED_CMD" であることを確認
     if (strcmp(commandData.type, "LED_CMD") == 0) {
       if (commandData.led_state) {
-        digitalWrite(LED_PIN, HIGH); // LED点灯
-        digitalWrite(IN1,HIGH);     //どちらかがHIGHでモータが周ります。
-        digitalWrite(IN2,LOW);      //正転
-        
-        //for(int i=255;i>=SPEEDA;i--){
-          analogWrite(ENA,255);
-          //delay(5);
-        //}
-        analogWrite(ENB,255);
-        digitalWrite(IN3,HIGH);     //どちらかがHIGHでモータが周ります。
-        digitalWrite(IN4,LOW);
-        delay(100);
-        digitalWrite(IN3,LOW);     //どちらかがHIGHでモータが周ります。
-        digitalWrite(IN4,LOW);
-        delay(100);
-        digitalWrite(IN4,HIGH);     //どちらかがHIGHでモータが周ります。
-        digitalWrite(IN3,LOW);
-        delay(100);
-        analogWrite(ENB,0);
-        delay(100);
-        digitalWrite(IN5,HIGH);     //どちらかがHIGHでモータが周ります。
-        digitalWrite(IN6,LOW);
-        delay(100);
-        digitalWrite(IN5,LOW);     //どちらかがHIGHでモータが周ります。
-        digitalWrite(IN6,LOW);
+        digitalWrite(IN5, LOW);
+        digitalWrite(IN6, HIGH);
+        delay(50);
+        digitalWrite(IN5, LOW);
+        digitalWrite(IN6, LOW);
+        is_sequence_active = true;
+        sequence_step = 0; 
+        last_step_time = millis();
         Serial.println(">>> コマンド受信: LED ON");
       } else {
-        digitalWrite(LED_PIN, LOW);  // LED消灯
+        is_sequence_active = false; // シーケンスを停止
+        sequence_step = 0;          // ステップをリセット
+        digitalWrite(LED_PIN, HIGH);  // LED消灯
         digitalWrite(IN1,LOW);      //停止（惰性回転）
         digitalWrite(IN2,LOW);
-        digitalWrite(IN3,LOW);      //停止（惰性回転）
-        digitalWrite(IN4,LOW);
-        digitalWrite(IN5,LOW);      //停止（惰性回転）
-        digitalWrite(IN6,LOW);
         analogWrite(ENA,0);
-        analogWrite(ENB,0);
+        delay(100);
+        digitalWrite(IN5, HIGH);
+        digitalWrite(IN6, LOW);
+        delay(50);
+        digitalWrite(IN5, LOW);
+        digitalWrite(IN6, LOW);
+        analogWrite(ENB, 255);
+        digitalWrite(IN3, LOW);
+        digitalWrite(IN4, HIGH);
+        delay(200);
+        analogWrite(ENB, 0);
+        digitalWrite(IN3, LOW);
+        digitalWrite(IN4, LOW);
         Serial.println(">>> コマンド受信: LED OFF");
       }
     }
@@ -172,7 +168,7 @@ void setup() {
 
 void loop() {
   // GPSデータ処理（5秒間隔のメインロジック） (既存)
-  smartDelay(100); 
+  smartDelay(200); 
 
   static unsigned long last_gps_send_time = 0;
   if (millis() - last_gps_send_time >= 5000) {
@@ -196,5 +192,45 @@ void loop() {
     esp_err_t result = esp_now_send(peerMac_Receiver, (uint8_t *)&myData, sizeof(myData));
 
     last_gps_send_time = millis(); 
+  }
+  if (is_sequence_active) {
+    // 100msごとに次のステップへ
+    if (millis() - last_step_time >= STEP_DURATION) {
+      last_step_time = millis(); // タイマー更新
+
+      // 受信時のif文内にあった、複雑なピン操作をステップごとに分割
+      switch (sequence_step) {
+        // 元のプログラムのIN3/IN4/IN5/IN6によるテストシーケンスを再現
+        case 0:
+          digitalWrite(LED_PIN, HIGH); // LED点灯
+        // シーケンスをアクティブにし、最初から開始
+          break;
+        case 1:
+          analogWrite(ENA, 255); 
+          digitalWrite(IN1, HIGH); 
+          digitalWrite(IN2, LOW); 
+          break;
+        case 2:
+          analogWrite(ENB, 255);
+          digitalWrite(IN3, HIGH);
+          digitalWrite(IN4, LOW);
+          break;
+        case 3:
+          analogWrite(ENB, 0);
+          digitalWrite(IN3, LOW);
+          digitalWrite(IN4, LOW);
+          break;
+        case 4:
+          digitalWrite(LED_PIN, LOW); // LED点灯
+        // シーケンスをアクティブにし、最初から開始
+          break;
+      }
+
+      sequence_step++;
+      // 全ステップが完了したら、sequence_stepを0に戻して最初から繰り返す
+      if (sequence_step >= 5) {
+        sequence_step = 0; 
+      }
+    }
   }
 }

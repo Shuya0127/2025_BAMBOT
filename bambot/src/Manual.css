@@ -8,7 +8,7 @@
     width: 150px;
     background-color: #d6f5d6;
     box-shadow: 3px 0 7.5px rgba(0, 0, 0, 0.15);
-    padding: 15px;
+    padding: 25px;
     display: flex;
     flex-direction: column;
     align-items: stretch;
@@ -34,7 +34,7 @@
     border: none;
     background-color: #f0f0f0;
     color: #333;
-    padding: 15px;
+    padding: 20px;
     margin-bottom: 10px;
     border-radius: 8px;
     cursor: pointer;
@@ -175,4 +175,10 @@
     background-color: #38761d;
     color: white;
     transform: scale(1.05);
+}
+.manual-image {
+  display: block;         /* 改行して中央寄せ */
+  max-width: 80%;         /* コンテナの幅に合わせて縮小 */
+  height: auto;           /* アスペクト比維持 */
+  margin: 20px auto;      /* 上下余白＋中央揃え */
 }
