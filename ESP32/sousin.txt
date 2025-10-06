@@ -3,41 +3,40 @@
 #include <esp_wifi.h>
 #include <TinyGPSPlus.h> 
 
-// === 1. MACアドレス定義 ===
+// === 1. MACアドレス定義, ピン定義, GPS初期化 (一部省略) ===
 // 受信機ESP32のMACアドレス (GPSデータ送信先 / コマンド受信元)
-// 🚨 あなたの受信機ESP32のMACアドレスに置き換えてください！
 uint8_t peerMac_Receiver[] = {0x9C, 0x9C, 0x1F, 0xCF, 0xE9, 0x40}; 
 
-// === 2. LEDピン定義 ===
-#define LED_PIN 2 // GPIO2をLED制御に使用
+// 制御ピン定義
+#define LED_PIN 2 
 #define IN1 18
 #define IN2 19
 #define ENA 5
-#define IN3 26//9番ピンを出力ピンIN3と定義してます。
-#define IN4 25//8番ピンを出力ピンIN4と定義してます。
-#define IN5 14//9番ピンを出力ピンIN3と定義してます。
-#define IN6 12//8番ピンを出力ピンIN4と定義してます。
+#define IN3 26
+#define IN4 25
+#define IN5 14 
+#define IN6 12 
 #define ENB 27
 #define SPEEDA 220
 #define SPEEDB 90
 
-// === 3. GPSモジュール用ピン定義 (既存) ===
+// GPSモジュール用ピン定義
 #define GPS_RX_PIN 16 
 #define GPS_TX_PIN 17 
 #define GPS_BAUD 9600 
-
 HardwareSerial SerialGPS(2); 
 TinyGPSPlus gps;
 
-// === 4. データ構造体定義 ===
+// === 4. データ構造体定義 (struct_commandを拡張) ===
 
 // 制御コマンド受信用の構造体 (受信機から送られてくる)
 typedef struct struct_command {
-  char type[10];      // "LED_CMD"
-  bool led_state;     // true: ON, false: OFF
+  char type[10];        // "LED_CMD" 
+  bool led_state;       // true: ON, false: OFF
+  char command_id[15];  // ★ 追加: "cut_off" または "cut_emergency" を格納
 } struct_command;
 
-// GPS送信データ構造体 (既存)
+// GPS送信データ構造体
 typedef struct struct_message {
   bool is_valid_gps;    
   double latitude;    
@@ -50,27 +49,44 @@ bool is_sequence_active = false;      // シーケンス実行状態 (ON/OFF)
 int sequence_step = 0;                // 現在のステップ番号
 unsigned long last_step_time = 0;     // 前回のステップ実行時刻
 const unsigned long STEP_DURATION = 100; // 各ステップの持続時間 (ms)
-// === 5. コールバック関数定義 ===
 
-// 送信完了コールバック (前回修正済み)
+// ★★★ 追加関数: 全モータ/アクチュエータを即時停止させる (緊急停止用) ★★★
+void stopAllActuators() {
+    is_sequence_active = false;
+    sequence_step = 0;
+    
+    // 全ての出力ピンを安全なOFF状態/LOW/0に設定
+    digitalWrite(LED_PIN, LOW);
+    digitalWrite(IN1, LOW); 
+    digitalWrite(IN2, LOW);
+    analogWrite(ENA, 0); 
+    digitalWrite(IN3, LOW);
+    digitalWrite(IN4, LOW);
+    analogWrite(ENB, 0);
+    digitalWrite(IN5, LOW);
+    digitalWrite(IN6, LOW);
+
+    Serial.println("!!! 全てのPINを即時停止しました (Emergency Stop) !!!");
+}
+
+// === 5. コールバック関数定義 (OnDataRecvを修正) ===
+
+// 送信完了コールバック 
 void OnDataSent(const wifi_tx_info_t *info, esp_now_send_status_t status) {
   Serial.print("GPSデータ送信結果: ");
   Serial.println(status == ESP_NOW_SEND_SUCCESS ? "成功" : "失敗");
 }
 
-// 受信コールバック (今回修正済み)
+// 受信コールバック (コマンドIDで分岐)
 void OnDataRecv(const esp_now_recv_info_t *info, const uint8_t *incomingData, int len) {
   struct_command commandData;
   
-  // MACアドレスが必要な場合は info->src_addr でアクセス可能
-  // (今回はMACアドレスは使用しないためロジックはそのまま)
-
   if (len == sizeof(commandData)) {
     memcpy(&commandData, incomingData, sizeof(commandData));
 
-    // データタイプが "LED_CMD" であることを確認
     if (strcmp(commandData.type, "LED_CMD") == 0) {
       if (commandData.led_state) {
+        // cut_on 受信 (実行開始)
         digitalWrite(IN5, LOW);
         digitalWrite(IN6, HIGH);
         delay(50);
@@ -79,34 +95,43 @@ void OnDataRecv(const esp_now_recv_info_t *info, const uint8_t *incomingData, in
         is_sequence_active = true;
         sequence_step = 0; 
         last_step_time = millis();
-        Serial.println(">>> コマンド受信: LED ON");
+        Serial.println(">>> コマンド受信: LED ON (シーケンス開始)");
       } else {
-        is_sequence_active = false; // シーケンスを停止
-        sequence_step = 0;          // ステップをリセット
-        digitalWrite(LED_PIN, HIGH);  // LED消灯
-        digitalWrite(IN1,LOW);      //停止（惰性回転）
-        digitalWrite(IN2,LOW);
-        analogWrite(ENA,0);
-        delay(100);
-        digitalWrite(IN5, HIGH);
-        digitalWrite(IN6, LOW);
-        delay(50);
-        digitalWrite(IN5, LOW);
-        digitalWrite(IN6, LOW);
-        analogWrite(ENB, 255);
-        digitalWrite(IN3, LOW);
-        digitalWrite(IN4, HIGH);
-        delay(200);
-        analogWrite(ENB, 0);
-        digitalWrite(IN3, LOW);
-        digitalWrite(IN4, LOW);
-        Serial.println(">>> コマンド受信: LED OFF");
+        // cut_off または cut_emergency 受信
+        if (strcmp(commandData.command_id, "cut_emergency") == 0) {
+          // ★ 緊急停止の場合: 即時停止
+          stopAllActuators();
+          Serial.println(">>> コマンド受信: 緊急停止 (即時停止実行)");
+        
+        } else if (strcmp(commandData.command_id, "cut_off") == 0) {
+          // ★ 終了の場合: 元の複雑な終了シーケンスを実行
+          is_sequence_active = false; 
+          sequence_step = 0;          
+          digitalWrite(LED_PIN, LOW);  // LED消灯
+          digitalWrite(IN1,LOW);      //停止（惰性回転）
+          digitalWrite(IN2,LOW);
+          analogWrite(ENA,0);
+          delay(100);
+          digitalWrite(IN5, HIGH);
+          digitalWrite(IN6, LOW);
+          delay(50);
+          digitalWrite(IN5, LOW);
+          digitalWrite(IN6, LOW);
+          analogWrite(ENB, 255);
+          digitalWrite(IN3, LOW);
+          digitalWrite(IN4, HIGH);
+          delay(200);
+          analogWrite(ENB, 0);
+          digitalWrite(IN3, LOW);
+          digitalWrite(IN4, LOW);
+          Serial.println(">>> コマンド受信: LED OFF (複雑な終了シーケンス実行)");
+        }
       }
     }
   }
 }
 
-// GPSデータ処理に集中するためのヘルパー関数 (既存)
+// GPSデータ処理に集中するためのヘルパー関数
 void smartDelay(unsigned long ms) {
   unsigned long start = millis();
   do {
@@ -118,28 +143,15 @@ void smartDelay(unsigned long ms) {
 
 
 void setup() {
-  Serial.begin(115200);
-  Serial.println("\n=== ESP32 GPS/ESP-NOW 送信機 起動 (双方向モード) ===");
+  Serial.begin(115000); 
 
   //モーターピンを初期化
-  pinMode(IN1,OUTPUT);
-  pinMode(IN2,OUTPUT);
-  pinMode(IN3,OUTPUT);
-  pinMode(IN4,OUTPUT);
-  pinMode(IN5,OUTPUT);
-  pinMode(IN6,OUTPUT);
-  pinMode(ENA,OUTPUT);
-  pinMode(ENB,OUTPUT);
-  // LEDピンを初期化
+  pinMode(IN1,OUTPUT); pinMode(IN2,OUTPUT); pinMode(IN3,OUTPUT); pinMode(IN4,OUTPUT);
+  pinMode(IN5,OUTPUT); pinMode(IN6,OUTPUT); pinMode(ENA,OUTPUT); pinMode(ENB,OUTPUT);
   pinMode(LED_PIN, OUTPUT);
-  digitalWrite(LED_PIN, LOW); // 最初は消灯
 
-  digitalWrite(IN1,LOW);      //最初は停止（惰性回転）
-  digitalWrite(IN2,LOW);
-  digitalWrite(IN3,LOW);      //最初は停止（惰性回転）
-  digitalWrite(IN4,LOW);
-  digitalWrite(IN5,LOW);      //最初は停止（惰性回転）
-  digitalWrite(IN6,LOW);
+  stopAllActuators(); // 初期状態は全て停止
+
   SerialGPS.begin(GPS_BAUD, SERIAL_8N1, GPS_RX_PIN, GPS_TX_PIN);
   
   WiFi.mode(WIFI_STA);
@@ -148,11 +160,9 @@ void setup() {
     return;
   }
 
-  // 送受信両方のコールバックを登録
   esp_now_register_send_cb(OnDataSent);
   esp_now_register_recv_cb(OnDataRecv); 
 
-  // ピアの追加
   esp_now_peer_info_t peerInfo;
   memset(&peerInfo, 0, sizeof(peerInfo)); 
   memcpy(peerInfo.peer_addr, peerMac_Receiver, 6);
@@ -167,43 +177,34 @@ void setup() {
 }
 
 void loop() {
-  // GPSデータ処理（5秒間隔のメインロジック） (既存)
   smartDelay(200); 
 
   static unsigned long last_gps_send_time = 0;
   if (millis() - last_gps_send_time >= 5000) {
 
-    // GPSデータ処理 
     if (gps.location.isUpdated()) {
       myData.is_valid_gps = true;
       myData.latitude = gps.location.lat();
       myData.longitude = gps.location.lng();
       myData.satellites = gps.satellites.isValid() ? gps.satellites.value() : 0;
-      Serial.println("GPSデータ送信 (有効)");
     } else {
       myData.is_valid_gps = false;
       myData.latitude = 0.0;
       myData.longitude = 0.0;
       myData.satellites = 0;
-      Serial.println("GPSデータ送信 (無効)");
     }
 
-    // GPS Fixの有無にかかわらず、定期的にデータを送信
     esp_err_t result = esp_now_send(peerMac_Receiver, (uint8_t *)&myData, sizeof(myData));
 
     last_gps_send_time = millis(); 
   }
   if (is_sequence_active) {
-    // 100msごとに次のステップへ
     if (millis() - last_step_time >= STEP_DURATION) {
-      last_step_time = millis(); // タイマー更新
+      last_step_time = millis(); 
 
-      // 受信時のif文内にあった、複雑なピン操作をステップごとに分割
       switch (sequence_step) {
-        // 元のプログラムのIN3/IN4/IN5/IN6によるテストシーケンスを再現
         case 0:
-          digitalWrite(LED_PIN, HIGH); // LED点灯
-        // シーケンスをアクティブにし、最初から開始
+          digitalWrite(LED_PIN, HIGH);
           break;
         case 1:
           analogWrite(ENA, 255); 
@@ -221,13 +222,11 @@ void loop() {
           digitalWrite(IN4, LOW);
           break;
         case 4:
-          digitalWrite(LED_PIN, LOW); // LED点灯
-        // シーケンスをアクティブにし、最初から開始
+          digitalWrite(LED_PIN, LOW); 
           break;
       }
 
       sequence_step++;
-      // 全ステップが完了したら、sequence_stepを0に戻して最初から繰り返す
       if (sequence_step >= 5) {
         sequence_step = 0; 
       }
