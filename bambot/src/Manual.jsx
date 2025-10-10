@@ -132,7 +132,7 @@ function Manual() {
             className={`sidebar-button ${currentView === 'main' ? 'active' : ''}`}
             onClick={() => setCurrentView('main')}
           >
-            BAMBOTとは
+            BAMBOT<br/>とは
           </button>
 
           {/* 他のマニュアル項目ボタン */}
